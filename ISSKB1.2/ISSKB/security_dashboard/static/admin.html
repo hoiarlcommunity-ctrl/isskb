@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ИП|Администрирование </title>
+  <link rel="icon" type="image/png" href="" />
+  <link rel="stylesheet" href="/static/css/global.css" />
+  <link rel="stylesheet" href="/static/css/admin.css" />
+</head>
+<body class="light-theme">
+
+<!-- ═══════════════════════ TOP BAR ══════════════════════════════════════════ -->
+<header id="admin-topbar">
+  <div class="atp-left">
+    <a href="/" class="atp-logo" title="ИП СКБ">
+      <span class="atp-logo-icon" id="atp-logo-fallback">⬡</span>
+      <img id="atp-logo-img" src="" alt="" style="display:none" />
+      <div class="atp-logo-text">
+        <span class="atp-logo-title">ИП СКБ</span>
+        <span class="atp-logo-sub">Войсковая часть 11111</span>
+      </div>
+    </a>
+    <div class="atp-divider"></div>
+    <span class="atp-title">Панель Администрирования</span>
+  </div>
+
+  <div class="atp-right">
+    <div class="atp-user">
+      <span class="atp-user-icon">👤</span>
+      <span class="atp-user-name" id="atp-username">—</span>
+    </div>
+    <button class="atp-btn" id="atp-theme-btn" title="Переключить тему">🌙</button>
+    <a href="/" class="atp-btn" title="Вернуться в систему мониторинга">← Мониторинг</a>
+    <button class="atp-btn danger" id="atp-logout-btn" title="Выйти из системы">⏻</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════ MAIN LAYOUT ══════════════════════════════════════ -->
+<div id="admin-layout">
+
+  <!-- Left nav -->
+  <nav id="admin-nav">
+    <div class="an-section-title">Управление</div>
+
+    <button class="an-btn active" data-section="users">
+      <span class="an-icon">👥</span>
+      Пользователи
+      <span class="an-badge" id="nav-users-count" style="display:none">0</span>
+    </button>
+    <button class="an-btn" data-section="audit">
+      <span class="an-icon">📋</span>
+      Журнал аудита
+    </button>
+    <button class="an-btn" data-section="sessions">
+      <span class="an-icon">🔌</span>
+      Активные сессии
+    </button>
+
+    <div class="an-section-title">Система</div>
+
+    <button class="an-btn" data-section="system">
+      <span class="an-icon">⚙</span>
+      Состояние системы
+    </button>
+
+    <div class="an-section-title">Интеграция</div>
+
+    <button class="an-btn" data-section="integration">
+      <span class="an-icon">🔗</span>
+      Источники данных
+    </button>
+
+    <button class="an-btn" data-section="logs">
+      <span class="an-icon">📡</span>
+      Логи системы
+      <span class="an-badge" id="nav-logs-badge" style="display:none;background:var(--s-warning)">!</span>
+    </button>
+  </nav>
+
+  <!-- Content area -->
+  <main id="admin-content">
+
+    <!-- ═══ USERS SECTION ══════════════════════════════════════════════════ -->
+    <section class="ac-section active" id="sec-users">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Пользователи системы</div>
+          <div class="sec-subtitle">Управление учётными записями и правами доступа</div>
+        </div>
+        <div class="sec-actions">
+          <button class="btn btn-primary" id="btn-create-user">+ Создать пользователя</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" id="users-search" placeholder="Поиск по имени, логину..." />
+        <select id="users-role-filter">
+          <option value="">Все роли</option>
+          <option value="admin">Администратор</option>
+          <option value="operator">Оператор </option>
+          <option value="viewer">Наблюдатель </option>
+        </select>
+        <select id="users-status-filter">
+          <option value="">Все статусы</option>
+          <option value="active">Активные</option>
+          <option value="inactive">Неактивные</option>
+          <option value="locked">Заблокированные</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" id="btn-refresh-users" title="Обновить">↻ Обновить</button>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="users-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Логин</th>
+              <th>ФИО</th>
+              <th>Должность</th>
+              <th>Роль</th>
+              <th>Воинская часть</th>
+              <th>Статус</th>
+              <th>Последний вход</th>
+              <th style="text-align:right;padding-right:16px">Действия</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Загрузка...</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══ AUDIT SECTION ══════════════════════════════════════════════════ -->
+    <section class="ac-section" id="sec-audit">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Журнал аудита авторизации</div>
+          <div class="sec-subtitle">История входов, выходов и изменений учётных записей</div>
+        </div>
+        <div class="sec-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-audit">↻ Обновить</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" id="audit-user-filter" placeholder="Фильтр по пользователю..." />
+        <select id="audit-action-filter">
+          <option value="">Все события</option>
+          <option value="login_ok">Вход выполнен</option>
+          <option value="login_fail">Ошибка входа</option>
+          <option value="logout">Выход</option>
+          <option value="token_refresh">Обновление токена</option>
+          <option value="account_locked">Блокировка</option>
+          <option value="password_changed">Смена пароля</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" id="btn-apply-audit-filter">Применить</button>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="audit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Время</th>
+              <th>Пользователь</th>
+              <th>Событие</th>
+              <th>IP-адрес</th>
+              <th>Результат</th>
+              <th>Подробности</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Загрузка журнала...</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span class="page-info" id="audit-page-info">—</span>
+        <button class="btn btn-secondary btn-sm" id="audit-prev" disabled>← Назад</button>
+        <button class="btn btn-secondary btn-sm" id="audit-next">Вперёд →</button>
+      </div>
+    </section>
+
+    <!-- ═══ SESSIONS SECTION ═══════════════════════════════════════════════ -->
+    <section class="ac-section" id="sec-sessions">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Активные сессии</div>
+          <div class="sec-subtitle">Пользователи, авторизованные в системе в данный момент</div>
+        </div>
+        <div class="sec-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-sessions">↻ Обновить</button>
+        </div>
+      </div>
+      <div class="session-cards" id="session-cards">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon">🔌</div>
+          <div class="empty-state-text">Загрузка сессий...</div>
+        </div>
+      </div>
+      <p style="margin-top:16px;font-size:11px;color:var(--txt-muted)">
+        * Сессии определяются по активным refresh-токенам. При развёртывании сети на несколько частей здесь будут отображаться все подключённые вч.
+      </p>
+    </section>
+
+    <!-- ═══ SYSTEM SECTION ════════════════════════════════════════════════ -->
+    <section class="ac-section" id="sec-system">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Состояние системы</div>
+          <div class="sec-subtitle">Мониторинг баз данных и управление сервером</div>
+        </div>
+        <div class="sec-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-system">↻ Обновить</button>
+        </div>
+      </div>
+
+      <!-- OS / Process metrics -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px">
+        <div class="db-card" style="padding:14px 16px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase;margin-bottom:8px">CPU</div>
+          <div style="font-size:22px;font-weight:700;color:var(--txt-primary)" id="mc-cpu-val">—</div>
+          <div style="font-size:11px;color:var(--txt-muted);margin:4px 0 8px" id="mc-cpu-sub">—</div>
+          <div style="height:4px;background:var(--border-dim);border-radius:2px"><div style="height:100%;border-radius:2px;background:var(--accent-br);transition:width .4s" id="mc-cpu-bar"></div></div>
+        </div>
+        <div class="db-card" style="padding:14px 16px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase;margin-bottom:8px">ОЗУ</div>
+          <div style="font-size:22px;font-weight:700;color:var(--txt-primary)" id="mc-ram-val">—</div>
+          <div style="font-size:11px;color:var(--txt-muted);margin:4px 0 8px" id="mc-ram-sub">—</div>
+          <div style="height:4px;background:var(--border-dim);border-radius:2px"><div style="height:100%;border-radius:2px;background:var(--accent-br);transition:width .4s" id="mc-ram-bar"></div></div>
+        </div>
+        <div class="db-card" style="padding:14px 16px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase;margin-bottom:8px">Процесс (МБ)</div>
+          <div style="font-size:22px;font-weight:700;color:var(--txt-primary)" id="mc-proc-val">—</div>
+          <div style="font-size:11px;color:var(--txt-muted);margin:4px 0 8px">RSS памяти сервера</div>
+        </div>
+        <div class="db-card" style="padding:14px 16px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase;margin-bottom:8px">Аптайм ОС</div>
+          <div style="font-size:22px;font-weight:700;color:var(--txt-primary)" id="mc-uptime-val">—</div>
+          <div style="font-size:11px;color:var(--txt-muted);margin:4px 0 8px">с момента загрузки</div>
+        </div>
+      </div>
+
+      <!-- DB connections -->
+      <div class="db-cards">
+        <div class="db-card">
+          <div class="dbc-header">
+            <div class="dbc-dot" id="dbc-main-dot"></div>
+            <span class="dbc-name">Основная БД (sentinel_isskb)</span>
+            <span class="dbc-badge" id="dbc-main-latency">—</span>
+          </div>
+          <div class="dbc-rows">
+            <div class="dbc-row"><span>Размер БД</span><span id="dbc-main-size">—</span></div>
+            <div class="dbc-row"><span>Активных соединений</span><span id="dbc-main-active">—</span></div>
+            <div class="dbc-row"><span>Всего соединений</span><span id="dbc-main-total">—</span></div>
+            <div class="dbc-row"><span>Устройств в БД</span><span id="dbc-main-devices">—</span></div>
+            <div class="dbc-row"><span>Открытых инцидентов</span><span id="dbc-main-inc">—</span></div>
+          </div>
+        </div>
+        <div class="db-card">
+          <div class="dbc-header">
+            <div class="dbc-dot" id="dbc-auth-dot"></div>
+            <span class="dbc-name">БД авторизации (sentinel_auth)</span>
+            <span class="dbc-badge" id="dbc-auth-latency">—</span>
+          </div>
+          <div class="dbc-rows">
+            <div class="dbc-row"><span>Размер БД</span><span id="dbc-auth-size">—</span></div>
+            <div class="dbc-row"><span>Соединений</span><span id="dbc-auth-total">—</span></div>
+            <div class="dbc-row"><span>Активных пользователей</span><span id="dbc-auth-users">—</span></div>
+            <div class="dbc-row"><span>Активных сессий</span><span id="dbc-auth-sessions">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server management -->
+      <div style="margin-top:24px">
+        <div class="sec-title" style="font-size:13px;margin-bottom:12px">Управление сервером</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-danger" id="btn-restart">⟳ Перезапустить сервер</button>
+        </div>
+        <p style="margin-top:10px;font-size:11px;color:var(--txt-muted)">
+          Перезапуск сервера приведёт к кратковременному отключению всех пользователей (~3 сек).
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ INTEGRATION SECTION ═════════════════════════════════════════════ -->
+    <section class="ac-section" id="sec-integration">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Источники данных</div>
+          <div class="sec-subtitle">Внешние серверы, маппинг полей API и буфер приёма данных</div>
+        </div>
+        <div class="sec-actions">
+          <button class="btn btn-primary" id="btn-add-source">+ Добавить источник</button>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-sources">↻ Обновить</button>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap" style="margin-bottom:24px">
+        <table class="admin-table" id="sources-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Название / Описание</th>
+              <th>Базовый URL</th>
+              <th>Опрос данных</th>
+              <th>Интервал</th>
+              <th>Heartbeat</th>
+              <th>Статус</th>
+              <th style="text-align:right;padding-right:16px">Действия</th>
+            </tr>
+          </thead>
+          <tbody id="sources-tbody">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Загрузка...</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Buffer stats -->
+      <div class="sec-title" style="font-size:13px;margin-bottom:14px">Буферная таблица (ext_devices)</div>
+      <div class="db-cards">
+        <div class="db-card" id="buffer-card">
+          <div class="dbc-header">
+            <div class="dbc-dot dbc-dot-ok" id="buffer-dot"></div>
+            <span class="dbc-name">ext_devices</span>
+            <span class="dbc-badge" id="buffer-badge">— записей</span>
+          </div>
+          <div class="dbc-rows">
+            <div class="dbc-row"><span>Всего записей</span><span id="buf-total">—</span></div>
+            <div class="dbc-row"><span>Из них онлайн</span><span id="buf-online">—</span></div>
+            <div class="dbc-row"><span>Первое получение</span><span id="buf-first">—</span></div>
+            <div class="dbc-row"><span>Последнее получение</span><span id="buf-last">—</span></div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-danger btn-sm" id="btn-clear-buffer">🗑 Очистить буфер</button>
+          </div>
+        </div>
+        <div class="db-card" style="border-style:dashed;display:flex;flex-direction:column;gap:10px;justify-content:center">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase">Маппинг полей API</div>
+          <p style="font-size:12px;color:var(--txt-secondary);line-height:1.65;margin:0">
+            Настраивается индивидуально для каждого источника (кнопка ✏). Можно добавить произвольные метрики.
+          </p>
+          <div style="font-size:11px;color:var(--txt-muted);line-height:1.8">
+            <div><code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">name, online, status, lat, lon</code> — базовые</div>
+            <div><code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">battery_level, signal_strength, error_code</code> → device_states</div>
+            <div><code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">altitude, speed, heading</code> → device_positions</div>
+            <div><code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">ip_address, port, priority, device_type</code> → devices</div>
+            <div><code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">любое другое поле</code> → extra_state JSONB</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ LOGS SECTION ══════════════════════════════════════════════════════ -->
+    <section class="ac-section" id="sec-logs">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Логи системы</div>
+          <div class="sec-subtitle">Все запросы, соединения, опросы источников и ошибки в реальном времени</div>
+        </div>
+        <div class="sec-actions">
+          <select id="log-filter-cat" class="form-control" style="width:160px;height:32px;font-size:12px">
+            <option value="">Все категории</option>
+            <option value="api">API запросы</option>
+            <option value="poller">Опрос источников</option>
+            <option value="heartbeat">Heartbeat</option>
+            <option value="sync">Синхронизация</option>
+            <option value="system">Система</option>
+          </select>
+          <select id="log-filter-level" class="form-control" style="width:130px;height:32px;font-size:12px">
+            <option value="">Все уровни</option>
+            <option value="error">Ошибки</option>
+            <option value="warn">Предупреждения</option>
+            <option value="info">Информация</option>
+            <option value="debug">Debug</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-logs">↻ Обновить</button>
+          <button class="btn btn-ghost btn-sm" id="btn-toggle-autolog" title="Авто-обновление">⏸ Стоп</button>
+        </div>
+      </div>
+
+      <div id="logs-feed" style="background:var(--bg-card);border:1px solid var(--border-dim);border-radius:8px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:var(--bg-elevated)">
+              <th style="text-align:left;padding:7px 12px;color:var(--txt-muted);font-weight:600;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;width:140px">Время</th>
+              <th style="text-align:left;padding:7px 10px;color:var(--txt-muted);font-weight:600;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;width:90px">Категория</th>
+              <th style="text-align:left;padding:7px 10px;color:var(--txt-muted);font-weight:600;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;width:60px">Уровень</th>
+              <th style="text-align:left;padding:7px 10px;color:var(--txt-muted);font-weight:600;font-size:10px;letter-spacing:0.06em;text-transform:uppercase">Сообщение</th>
+              <th style="text-align:left;padding:7px 10px;color:var(--txt-muted);font-weight:600;font-size:10px;letter-spacing:0.06em;text-transform:uppercase">Детали</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-text">Загрузка логов...</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--txt-dim);text-align:right">
+        Показаны последние <span id="logs-count">—</span> событий · автообновление каждые 5 сек
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════ USER MODAL ════════════════════════════════════════ -->
+<div class="adm-modal-backdrop" id="user-modal">
+  <div class="adm-modal" style="width:560px">
+    <div class="adm-modal-header">
+      <div>
+        <div class="adm-modal-title" id="user-modal-title">Создать пользователя</div>
+        <div class="adm-modal-subtitle" id="user-modal-subtitle">Заполните данные нового пользователя системы</div>
+      </div>
+      <button class="adm-modal-close" id="user-modal-close">✕</button>
+    </div>
+    <div class="adm-modal-body">
+      <div class="form-grid">
+        <!-- Login -->
+        <div class="form-group">
+          <label class="form-label required">Логин</label>
+          <input class="form-control" type="text" id="uf-username" placeholder="username" autocomplete="off" />
+        </div>
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" id="uf-pw-label">Пароль</label>
+          <div class="pw-row">
+            <input class="form-control" type="password" id="uf-password" placeholder="минимум 6 символов" autocomplete="new-password" />
+            <button class="pw-eye" type="button" id="uf-pw-eye" title="Показать/скрыть">👁</button>
+            <button class="pw-eye" type="button" id="uf-pw-gen" title="Сгенерировать пароль">🎲</button>
+          </div>
+          <div class="gen-pwd-box" id="uf-gen-box" style="display:none">
+            <span class="gen-pwd-val" id="uf-gen-val"></span>
+            <button class="gen-pwd-copy" id="uf-gen-copy">Копировать</button>
+          </div>
+        </div>
+        <!-- Full name -->
+        <div class="form-group">
+          <label class="form-label">ФИО</label>
+          <input class="form-control" type="text" id="uf-fullname" placeholder="Фамилия Имя Отчество" />
+        </div>
+        <!-- Job title -->
+        <div class="form-group">
+          <label class="form-label">Должность</label>
+          <input class="form-control" type="text" id="uf-jobtitle" placeholder="Оперативный дежурный" />
+        </div>
+        <!-- Role -->
+        <div class="form-group">
+          <label class="form-label required">Роль</label>
+          <select class="form-control" id="uf-role">
+            <option value="operator">Оператор</option>
+            <option value="viewer">Наблюдатель</option>
+            <option value="admin">Администратор</option>
+          </select>
+        </div>
+        <!-- Office -->
+        <div class="form-group">
+          <label class="form-label">Воинская часть</label>
+          <input class="form-control" type="text" id="uf-office" placeholder="main" />
+        </div>
+        <!-- Phone -->
+        <div class="form-group">
+          <label class="form-label">Телефон</label>
+          <input class="form-control" type="text" id="uf-phone" placeholder="+7 (___) ___-__-__" />
+        </div>
+        <!-- Active -->
+        <div class="form-group" style="justify-content:flex-end;padding-top:20px">
+          <div class="form-check">
+            <input type="checkbox" id="uf-active" checked />
+            <label class="form-check-label" for="uf-active">Учётная запись активна</label>
+          </div>
+        </div>
+        <!-- Notes -->
+        <div class="form-group full">
+          <label class="form-label">Примечание</label>
+          <textarea class="form-control" id="uf-notes" placeholder="Дополнительная информация..." rows="2"></textarea>
+        </div>
+      </div>
+      <div id="user-modal-error" style="margin-top:10px;font-size:12px;color:var(--s-critical);display:none"></div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn btn-secondary" id="user-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="user-modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PASSWORD RESET MODAL ══════════════════════════════ -->
+<div class="adm-modal-backdrop" id="pwd-modal">
+  <div class="adm-modal" style="width:420px">
+    <div class="adm-modal-header">
+      <div>
+        <div class="adm-modal-title">Сброс пароля</div>
+        <div class="adm-modal-subtitle" id="pwd-modal-sub">Пользователь: —</div>
+      </div>
+      <button class="adm-modal-close" id="pwd-modal-close">✕</button>
+    </div>
+    <div class="adm-modal-body">
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Новый пароль</label>
+        <div class="pw-row">
+          <input class="form-control" type="password" id="pf-password" placeholder="минимум 6 символов" />
+          <button class="pw-eye" type="button" id="pf-pw-eye" title="Показать/скрыть">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%;justify-content:center" id="pf-generate">🎲 Сгенерировать случайный пароль</button>
+      <div class="gen-pwd-box" id="pf-gen-box" style="display:none;margin-top:10px">
+        <span class="gen-pwd-val" id="pf-gen-val"></span>
+        <button class="gen-pwd-copy" id="pf-gen-copy">Копировать</button>
+      </div>
+      <div id="pwd-modal-error" style="margin-top:10px;font-size:12px;color:var(--s-critical);display:none"></div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn btn-secondary" id="pwd-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="pwd-modal-save">Сбросить пароль</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DELETE CONFIRM ════════════════════════════════════ -->
+<div class="adm-modal-backdrop" id="del-modal">
+  <div class="adm-modal" style="width:380px">
+    <div class="adm-modal-header">
+      <div>
+        <div class="adm-modal-title" style="color:var(--s-critical)">Удаление пользователя</div>
+        <div class="adm-modal-subtitle" id="del-modal-sub">Это действие необратимо</div>
+      </div>
+      <button class="adm-modal-close" id="del-modal-close">✕</button>
+    </div>
+    <div class="adm-modal-body">
+      <p style="font-size:13px;color:var(--txt-secondary);line-height:1.6" id="del-modal-text">
+        Удалить пользователя <strong id="del-modal-user"></strong>?<br>
+        Все связанные refresh-токены также будут удалены.
+      </p>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn btn-secondary" id="del-modal-cancel">Отмена</button>
+      <button class="btn btn-danger" id="del-modal-confirm">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SOURCE MODAL ══════════════════════════════════════ -->
+<div class="adm-modal-backdrop" id="src-modal">
+  <div class="adm-modal" style="width:640px;max-height:92vh">
+    <div class="adm-modal-header">
+      <div>
+        <div class="adm-modal-title" id="src-modal-title">Добавить источник данных</div>
+        <div class="adm-modal-subtitle">Подключение, опрос устройств и маппинг полей</div>
+      </div>
+      <button class="adm-modal-close" id="src-modal-close">✕</button>
+    </div>
+    <div class="adm-modal-body" style="overflow-y:auto;max-height:calc(92vh - 130px)">
+
+      <!-- Connection settings -->
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label required">Название источника</label>
+          <input class="form-control" id="sf-name" placeholder="Сервер данных — Основной" />
+        </div>
+        <div class="form-group full">
+          <label class="form-label required">Базовый URL</label>
+          <input class="form-control" id="sf-base-url" placeholder="http://192.168.1.190" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Путь для пинга (healthcheck)</label>
+          <input class="form-control" id="sf-ping-path" placeholder="/time.php?komandos=run" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ожидаемый ответ (пусто = любой HTTP 200)</label>
+          <input class="form-control" id="sf-ping-ok" placeholder="ok" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Таймаут соединения (сек.)</label>
+          <input class="form-control" type="number" id="sf-timeout" value="10" min="1" max="120" />
+        </div>
+        <div class="form-group" style="gap:10px;justify-content:flex-end;padding-top:18px">
+          <div class="form-check">
+            <input type="checkbox" id="sf-active" checked />
+            <label class="form-check-label" for="sf-active">Источник активен</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" id="sf-heartbeat" />
+            <label class="form-check-label" for="sf-heartbeat">Heartbeat мониторинг</label>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Описание</label>
+          <textarea class="form-control" id="sf-description" rows="2" placeholder="Необязательное описание источника..."></textarea>
+        </div>
+      </div>
+
+      <!-- Data polling -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-subtle)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase;margin-bottom:8px">
+          Опрос устройств (автоматический Pull)
+        </div>
+        <p style="font-size:11px;color:var(--txt-muted);margin-bottom:10px;line-height:1.5">
+          Укажите путь к эндпоинту со списком устройств. Система будет автоматически загружать данные с заданным интервалом и синхронизировать с основной БД.
+        </p>
+        <div class="form-grid" style="gap:10px">
+          <div class="form-group full">
+            <label class="form-label">Путь к данным устройств</label>
+            <input class="form-control" id="sf-data-path" placeholder="/time.php?komandos=settings" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Формат ответа</label>
+            <select class="form-control" id="sf-response-format">
+              <option value="json">JSON</option>
+              <option value="php_print_r">PHP print_r()</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Интервал опроса (сек.)</label>
+            <input class="form-control" type="number" id="sf-poll-interval" value="60" min="10" max="3600" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Field mapping -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-subtle)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--txt-muted);text-transform:uppercase">
+            Маппинг полей API → БД
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" id="fm-add-btn" style="font-size:11px;padding:3px 10px">+ Добавить поле</button>
+        </div>
+        <p style="font-size:11px;color:var(--txt-muted);margin-bottom:10px;line-height:1.5">
+          Укажите какое поле из JSON-ответа API соответствует системному полю. Первые строки обязательные.
+        </p>
+        <table style="width:100%;border-collapse:collapse" id="fm-table">
+          <thead>
+            <tr style="background:var(--bg-elevated)">
+              <th style="text-align:left;padding:6px 10px;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-muted);border-radius:4px 0 0 4px;width:120px">Системное поле</th>
+              <th style="text-align:left;padding:6px 10px;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-muted)">Поле из API</th>
+              <th style="text-align:left;padding:6px 10px;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-muted)">Целевое поле в БД</th>
+              <th style="width:32px;border-radius:0 4px 4px 0"></th>
+            </tr>
+          </thead>
+          <tbody id="fm-fixed-tbody">
+            <tr style="border-bottom:1px solid var(--border-dim)">
+              <td style="padding:5px 10px;font-family:monospace;color:var(--accent-br);font-size:12px">name <span style="color:var(--s-critical)">*</span></td>
+              <td style="padding:4px 10px"><input class="form-control" id="fm-name" placeholder="name" style="height:26px;font-size:12px" /></td>
+              <td style="padding:5px 10px;color:var(--txt-muted);font-size:11px;font-family:monospace">devices.name</td>
+              <td style="padding:4px 6px;color:var(--txt-dim);font-size:14px;text-align:center" title="Обязательное">🔒</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-dim)">
+              <td style="padding:5px 10px;font-family:monospace;color:var(--accent-br);font-size:12px">online</td>
+              <td style="padding:4px 10px"><input class="form-control" id="fm-online" placeholder="operation" style="height:26px;font-size:12px" /></td>
+              <td style="padding:5px 10px;color:var(--txt-muted);font-size:11px;font-family:monospace">device_states.online_status</td>
+              <td style="padding:4px 6px;color:var(--txt-dim);font-size:14px;text-align:center">🔒</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-dim)">
+              <td style="padding:5px 10px;font-family:monospace;color:var(--accent-br);font-size:12px">status</td>
+              <td style="padding:4px 10px"><input class="form-control" id="fm-status" placeholder="tech_status" style="height:26px;font-size:12px" /></td>
+              <td style="padding:5px 10px;color:var(--txt-muted);font-size:11px;font-family:monospace">device_states.operational_mode</td>
+              <td style="padding:4px 6px;color:var(--txt-dim);font-size:14px;text-align:center">🔒</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-dim)">
+              <td style="padding:5px 10px;font-family:monospace;color:var(--accent-br);font-size:12px">lat</td>
+              <td style="padding:4px 10px"><input class="form-control" id="fm-lat" placeholder="lat" style="height:26px;font-size:12px" /></td>
+              <td style="padding:5px 10px;color:var(--txt-muted);font-size:11px;font-family:monospace">device_positions.latitude</td>
+              <td style="padding:4px 6px;color:var(--txt-dim);font-size:14px;text-align:center">🔒</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-dim)">
+              <td style="padding:5px 10px;font-family:monospace;color:var(--accent-br);font-size:12px">lon</td>
+              <td style="padding:4px 10px"><input class="form-control" id="fm-lon" placeholder="long" style="height:26px;font-size:12px" /></td>
+              <td style="padding:5px 10px;color:var(--txt-muted);font-size:11px;font-family:monospace">device_positions.longitude</td>
+              <td style="padding:4px 6px;color:var(--txt-dim);font-size:14px;text-align:center">🔒</td>
+            </tr>
+          </tbody>
+          <tbody id="fm-custom-tbody"></tbody>
+        </table>
+        <datalist id="fm-sys-datalist">
+          <option value="external_key">
+          <option value="ip_address">
+          <option value="port">
+          <option value="priority">
+          <option value="device_type">
+          <option value="description">
+          <option value="icon_url">
+          <option value="battery_level">
+          <option value="signal_strength">
+          <option value="error_code">
+          <option value="altitude">
+          <option value="speed">
+          <option value="heading">
+          <option value="tech">
+          <option value="ping_online">
+          <option value="check_method">
+          <option value="start_nar">
+        </datalist>
+        <div id="fm-db-info" style="margin-top:10px;padding:8px 12px;background:var(--bg-elevated);border-radius:6px;font-size:11px;color:var(--txt-muted);line-height:1.7;display:none">
+          <strong style="color:var(--txt-secondary)">Поля БД:</strong>
+          <code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">external_key/ip_address/port/priority/device_type/description/icon_path</code> → devices &nbsp;
+          <code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">battery_level/signal_strength/error_code</code> → device_states &nbsp;
+          <code style="background:var(--bg-overlay);padding:1px 4px;border-radius:3px">altitude/speed/heading</code> → device_positions &nbsp;
+          Остальные → extra_state JSONB
+        </div>
+      </div>
+
+      <div id="src-modal-error" style="margin-top:12px;font-size:12px;color:var(--s-critical);display:none"></div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn btn-secondary btn-sm" id="src-modal-test" style="margin-right:auto">🔌 Проверить связь</button>
+      <button class="btn btn-secondary" id="src-modal-cancel">Отмена</button>
+      <button class="btn btn-primary" id="src-modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TOAST AREA ════════════════════════════════════════ -->
+<div class="adm-toast-area" id="adm-toast-area"></div>
+
+<script src="/static/js/admin.js?v=5"></script>
+</body>
+</html>

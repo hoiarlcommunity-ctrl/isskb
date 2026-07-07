@@ -1,0 +1,22 @@
+{
+  "ext_sources": [
+    {
+      "name": "Сервер данных ИССКБ",
+      "description": "Внешний сервер данных (heartbeat) — отключён в автономном режиме",
+      "base_url": "http://192.168.1.190",
+      "ping_path": "/time.php?komandos=run",
+      "ping_ok_text": "ok",
+      "is_active": false,
+      "is_heartbeat": true,
+      "timeout_s": 10,
+      "field_map": {
+        "name": "name",
+        "online": "online",
+        "status": "status",
+        "lat": "lat",
+        "lon": "lon"
+      },
+      "id": 1
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+/* ── Animations ─────────────────────────────────────────────────────────── */
+
+@keyframes hexPulse {
+  0%,100% { filter: drop-shadow(0 0 4px var(--accent)); }
+  50%      { filter: drop-shadow(0 0 10px var(--accent-br)); }
+}
+
+@keyframes wsBreath {
+  0%,100% { box-shadow: 0 0 4px var(--s-online); }
+  50%      { box-shadow: 0 0 10px var(--s-online); }
+}
+
+@keyframes criticalPulse {
+  0%,100% { opacity: 1;   box-shadow: 0 0 6px var(--s-critical); }
+  50%      { opacity: 0.5; box-shadow: 0 0 14px var(--s-critical); }
+}
+
+@keyframes pillCritical {
+  0%,100% { box-shadow: 0 0 8px rgba(239,68,68,0.12); }
+  50%      { box-shadow: 0 0 18px rgba(239,68,68,0.30); }
+}
+
+@keyframes dotPulse {
+  0%,100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.4); opacity: 0.7; }
+}
+
+@keyframes rowPulse {
+  0%,100% { background: transparent; }
+  50%      { background: rgba(239,68,68,0.04); }
+}
+
+@keyframes markerAlarm {
+  0%   { transform: scale(1);   opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.anim-fade-in  { animation: fadeInUp 0.25s ease both; }
+.anim-slide-in { animation: slideIn  0.2s ease both; }
+
+/* Pulse for alarm dots in legend */
+.pulse-dot { animation: dotPulse 1.4s ease-in-out infinite; }

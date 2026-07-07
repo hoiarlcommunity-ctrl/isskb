@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "host": "192.168.1.154",
+  "port": 5432,
+  "database": "postgres",
+  "user": "master",
+  "password": "m",
+  "device_name": "SkyHunter-1",
+  "device_lat": null,
+  "device_lon": null,
+  "poll_interval_s": 1.0,
+  "reconnect_interval_s": 10.0,
+  "idle_timeout_s": 30
+}

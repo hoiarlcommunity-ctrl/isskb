@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ИП СКБ</title>
+  <link rel="icon" type="image/png" href="/static/logo/logo.png">
+  <!-- Leaflet (local — offline capable) -->
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/static/css/global.css?v=3" />
+  <link rel="stylesheet" href="/static/css/topbar.css?v=3" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+  <link rel="stylesheet" href="/static/css/sidebar.css?v=3" />
+  <link rel="stylesheet" href="/static/css/map.css?v=3" />
+  <link rel="stylesheet" href="/static/css/rightpanel.css" />
+  <link rel="stylesheet" href="/static/css/bottombar.css" />
+  <link rel="stylesheet" href="/static/css/animations.css" />
+  <link rel="stylesheet" href="/static/css/tabs.css" />
+  <link rel="stylesheet" href="/static/css/toast.css" />
+  <link rel="stylesheet" href="/static/css/layers.css?v=3" />
+  <link rel="stylesheet" href="/static/css/ext_status.css" />
+  <link rel="stylesheet" href="/static/css/device_manager.css?v=2" />
+  <style>
+    /* ── Inline styles for new modals ─────────────────────────────────────── */
+
+    /* Maintenance modal */
+    #maintenance-modal,
+    #incident-status-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 8, 18, 0.75);
+      backdrop-filter: blur(6px);
+    }
+    #maintenance-modal.visible,
+    #incident-status-modal.visible {
+      display: flex;
+    }
+    .modal-card {
+      background: var(--panel-bg, #0d1117);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 28px 32px;
+      width: 420px;
+      max-width: 94vw;
+    }
+    .modal-card h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--txt-primary, #e2e8f0);
+      text-transform: uppercase;
+    }
+    .modal-card .modal-subtitle {
+      font-size: 12px;
+      color: var(--txt-muted, #94a3b8);
+      margin-bottom: 18px;
+    }
+    .modal-card textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: var(--txt-primary, #e2e8f0);
+      font-size: 12px;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 70px;
+      font-family: inherit;
+      margin-bottom: 14px;
+    }
+    .modal-card textarea:focus {
+      outline: none;
+      border-color: rgba(59,130,246,0.5);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .modal-btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      letter-spacing: 0.04em;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .modal-btn-cancel {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.10);
+      color: var(--txt-muted, #94a3b8);
+    }
+    .modal-btn-cancel:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .modal-btn-confirm {
+      background: #3b82f6;
+      color: #fff;
+    }
+    .modal-btn-confirm:hover { background: #2563eb; }
+    .modal-btn-confirm:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .modal-btn-danger {
+      background: rgba(239,68,68,0.15);
+      border-color: rgba(239,68,68,0.4);
+      color: #ef4444;
+    }
+    .modal-btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+    /* Status radio group */
+    .ism-radios {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .ism-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.12);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--txt-muted, #94a3b8);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .ism-radio-label input { display: none; }
+    .ism-radio-label:has(input:checked) {
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(59,130,246,0.5);
+      color: #60a5fa;
+    }
+
+    /* Comments section */
+    .ism-comments-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--txt-muted, #64748b);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    #ism-comments {
+      max-height: 160px;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 14px;
+    }
+    .ism-comment {
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 6px 0;
+    }
+    .ism-comment:last-child { border-bottom: none; }
+    .ism-comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+    .ism-comment-author {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--txt-primary, #e2e8f0);
+    }
+    .ism-comment-time {
+      font-size: 10px;
+      color: var(--txt-muted, #64748b);
+    }
+    .ism-comment-status {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba(59,130,246,0.15);
+      color: #60a5fa;
+    }
+    .ism-comment-text {
+      font-size: 11px;
+      color: var(--txt-secondary, #cbd5e1);
+      line-height: 1.5;
+    }
+    .ism-loading, .ism-no-comments {
+      font-size: 11px;
+      color: var(--txt-muted, #64748b);
+      text-align: center;
+      padding: 10px;
+    }
+
+    /* Incident status badge in feed */
+    .inc-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .inc-status-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 6px;
+      color: var(--txt-muted, #94a3b8);
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px 7px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .inc-status-btn:hover {
+      background: rgba(255,255,255,0.07);
+      color: var(--txt-primary, #e2e8f0);
+    }
+
+    /* Layer separator */
+    .layer-sep {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--txt-muted, #64748b);
+      padding: 8px 4px 4px;
+      text-transform: uppercase;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 4px;
+    }
+
+    /* di-bat inline battery */
+    .di-bat {
+      font-size: 10px;
+      color: var(--txt-muted, #64748b);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Icon upload hint */
+    .dd-icon-wrap {
+      position: relative;
+      cursor: pointer;
+    }
+    .dd-icon-wrap:hover::after {
+      content: '📤';
+      position: absolute;
+      bottom: -4px;
+      right: -6px;
+      font-size: 11px;
+    }
+
+    /* Logo in topbar */
+    #topbar-logo {
+      height: 30px;
+      width: auto;
+      max-width: 120px;
+      object-fit: contain;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #topbar-logo-upload { display: none; }
+
+    /* Maintenance button in panel */
+    #action-maintenance {
+      width: 100%;
+      margin-top: 6px;
+    }
+    #action-maintenance:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    /* ── Page loading overlay ──────────────────────────────────────────────── */
+    #page-loader {
+      position: fixed; inset: 0; z-index: 20000;
+      background: #ffffff;
+      overflow: hidden;
+      transition: opacity 0.5s ease;
+    }
+    #page-loader.fade-out { opacity: 0; pointer-events: none; }
+    #page-loader.gone     { display: none; }
+
+    /* Main center logo — nearly full screen */
+    .pl-logo-main {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 78%; max-width: 1000px;
+      max-height: 82vh;
+      object-fit: contain;
+      opacity: 0.88;
+      animation: pl-pulse-main 3.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Side logos — 22% smaller width, partial off-screen */
+    .pl-logo-side {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 56%; max-width: 720px;
+      max-height: 66vh;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .pl-logo-left {
+      left: -10%;
+      opacity: 0.35;
+      animation: pl-pulse-side 3.2s ease-in-out 1s infinite;
+    }
+    .pl-logo-right {
+      right: -10%;
+      opacity: 0.35;
+      animation: pl-pulse-side 3.2s ease-in-out 2s infinite;
+    }
+
+    /* Glass overlay — сильный blur поверх логотипов */
+    .pl-glass {
+      position: absolute; inset: 0;
+      background: rgba(255, 255, 255, 0.38);
+      backdrop-filter: blur(14px) saturate(1.2);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    }
+
+    /* Bottom loader area */
+    .pl-bottom {
+      position: absolute;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      z-index: 1;
+    }
+    .pl-spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(59,130,246,0.25);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .pl-text {
+      font-size: 11px; letter-spacing: 3px;
+      color: rgba(71, 85, 105, 0.65);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    @keyframes pl-pulse-main {
+      0%, 100% { opacity: 0.82; transform: translate(-50%, -50%) scale(1); }
+      50%       { opacity: 0.96; transform: translate(-50%, -50%) scale(1.025); }
+    }
+    @keyframes pl-pulse-side {
+      0%, 100% { opacity: 0.30; }
+      50%       { opacity: 0.50; }
+    }
+  </style>
+</head>
+<body class="light-theme">
+
+<div id="page-loader">
+  <img class="pl-logo-side pl-logo-left"  src="/static/logo/logo2.png" alt="" />
+  <img class="pl-logo-main"               src="/static/logo/logo.png"  alt="" />
+  <img class="pl-logo-side pl-logo-right" src="/static/logo/logo2.png" alt="" />
+  <div class="pl-glass"></div>
+  <div class="pl-bottom">
+    <div class="pl-spinner"></div>
+    <div class="pl-text">Загрузка системы...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TOP BAR ═══════════════════════════════════════ -->
+<header id="topbar">
+  <div class="topbar-left">
+    <div class="logo" id="logo-block">
+      <!-- Logo image (hidden until uploaded) -->
+      <img id="topbar-logo" src="" alt="Логотип" style="display:none" title="Сменить" />
+      <input type="file" id="topbar-logo-upload" accept=".png,.jpg,.jpeg,.svg,.gif,.webp" />
+      <!-- Fallback icon+text (shown when no logo) -->
+      <span class="logo-icon" id="logo-fallback-icon">⬡</span>
+      <div class="logo-text" id="logo-fallback-text">
+        <span class="logo-title">ИП СКБ</span>
+        <span class="logo-sub">Войсковая часть 11111</span>
+      </div>
+    </div>
+    <!-- Alert mode badge (moved here from right, wider) -->
+    <div class="alert-mode-badge amb-everyday" id="topbar-mode-badge" title="Текущий режим работы">
+      <span class="amb-dot dot-online"></span>
+      <span class="amb-label" id="topbar-mode-label">ПОВСЕДНЕВНЫЙ</span>
+    </div>
+  </div>
+
+  <!-- Center: metric pills + clock -->
+  <div class="topbar-center">
+    <div class="metric-pill pill-online">
+      <span class="pill-dot dot-online"></span>
+      <span id="stat-online">—</span>
+      <span class="pill-label">ОНЛАЙН</span>
+    </div>
+    <div class="metric-pill pill-warning">
+      <span class="pill-dot dot-warning"></span>
+      <span id="stat-warning">—</span>
+      <span class="pill-label">ПРЕДУПР.</span>
+    </div>
+    <div class="time-block tb-clock">
+      <div id="clock" class="clock">--:--:--</div>
+      <div id="dateline" class="dateline">--.--.----</div>
+    </div>
+    <div class="metric-pill pill-critical" id="pill-critical">
+      <span class="pill-dot dot-critical"></span>
+      <span id="stat-critical">—</span>
+      <span class="pill-label">ИНЦ.</span>
+    </div>
+    <div class="metric-pill pill-offline">
+      <span class="pill-dot dot-offline"></span>
+      <span id="stat-offline">—</span>
+      <span class="pill-label">ОФФЛ.</span>
+    </div>
+  </div>
+
+  <!-- Right: sys-status + controls + profile -->
+  <div class="topbar-right">
+    <div class="system-status">
+      <div class="status-led" id="sys-led"></div>
+      <span id="sys-status-text">ИНИЦИАЛИЗАЦИЯ...</span>
+    </div>
+    <a href="/admin" class="topbar-admin-btn" id="topbar-admin-btn" title="Панель администрирования">🛡</a>
+    <button class="theme-toggle" id="theme-toggle" title="Переключить тему">🌙</button>
+    <button class="theme-toggle" id="logout-btn" title="Выйти из системы" style="font-size:14px;">⏻</button>
+    <button class="ext-ping-btn" id="ext-ping-btn" title="Проверить связь с сервером данных">
+      <span class="ext-ping-icon" id="ext-ping-icon">📡</span>
+    </button>
+    <div class="ws-indicator" id="ws-indicator" title="WebSocket — статус соединения">
+      <span class="ws-dot"></span>
+    </div>
+    <button class="operator-badge" id="profile-btn" title="Профиль пользователя">
+      <span class="op-icon" id="op-icon">👤</span>
+      <div class="op-info">
+        <span class="op-name" id="op-name">—</span>
+        <span class="op-badge" id="op-badge">—</span>
+      </div>
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════ MAIN LAYOUT ═══════════════════════════════════ -->
+<main id="dashboard">
+
+  <!-- ─────────── LEFT PANEL ─────────── -->
+  <aside id="left-panel">
+    <div class="panel-header">
+      <span class="panel-title">УСТРОЙСТВА</span>
+      <span class="panel-count" id="device-count-badge">—</span>
+      <button class="topbar-mgr-btn" id="topbar-mgr-btn" title="Управление устройствами">⚙</button>
+    </div>
+
+    <!-- Alert mode selector -->
+    <div class="alert-mode-panel">
+      <div class="amp-title">Режим</div>
+      <div class="amp-modes" id="amp-modes">
+        <button class="amp-btn active-everyday" data-mode="everyday">Повседневный</button>
+        <button class="amp-btn" data-mode="mode1">ВСБГ</button>
+        <button class="amp-btn" data-mode="mode2">ЛПА</button>
+        <button class="amp-btn" data-mode="mode3">Антитеррор А</button>
+        <button class="amp-btn" data-mode="mode4">Антитеррор Б</button>
+        <button class="amp-btn" data-mode="mode5">Антитеррор В</button>
+      </div>
+    </div>
+
+    <!-- Search + filter -->
+    <div class="search-row">
+      <input type="text" id="device-search" placeholder="Поиск устройства..." />
+    </div>
+    <div class="filter-row" id="filter-row">
+      <button class="filter-btn active" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="alarm">🔴 Тревога</button>
+      <button class="filter-btn" data-filter="warning">🟡 Предупр.</button>
+      <button class="filter-btn" data-filter="offline">⚫ Оффлайн</button>
+    </div>
+
+    <!-- Device list -->
+    <div id="device-list" class="device-list"></div>
+
+    <!-- System mini-stats -->
+    <div class="mini-stats" id="mini-stats">
+      <div class="mini-stat">
+        <span class="ms-val" id="ms-total">—</span>
+        <span class="ms-key">ВСЕГО</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-val online-color" id="ms-online">—</span>
+        <span class="ms-key">ОНЛАЙН</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-val warning-color" id="ms-warning">—</span>
+        <span class="ms-key">ПРЕДУПР.</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-val offline-color" id="ms-offline">—</span>
+        <span class="ms-key">ОФФЛАЙН</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─────────── MAP WIDGET ─────────── -->
+  <section id="map-container">
+    <div id="map"></div>
+
+    <div id="tile-hint" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+         background:rgba(11,15,26,0.92);border:1px solid rgba(234,179,8,0.4);border-radius:8px;
+         padding:14px 20px;color:#eab308;font-size:12px;z-index:800;text-align:center;
+         max-width:340px;line-height:1.6;pointer-events:none;backdrop-filter:blur(6px)"></div>
+
+    <!-- Layer control -->
+    <div id="layer-control">
+      <div class="lc-title">
+        СЛОИ
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="lc-toggle-all" id="lc-toggle-all">все</button>
+          <button class="lc-hide-btn" id="lc-hide-btn" title="Свернуть / развернуть панель">▲</button>
+        </div>
+      </div>
+      <div id="layer-rows"></div>
+    </div>
+
+    <!-- Map overlays -->
+    <div id="map-toolbar">
+      <button class="map-btn active" id="btn-all-devices" title="Все устройства">◉</button>
+      <button class="map-btn" id="btn-fit-all" title="Обзор — вписать в экран">⊡</button>
+      <button class="map-btn" id="btn-toggle-zones" title="Зоны охраны">⬡</button>
+      <div class="map-btn-sep"></div>
+      <button class="map-btn active" id="btn-map-dark" title="Тёмная карта">◑</button>
+      <button class="map-btn" id="btn-map-sat" title="Спутниковый снимок">◎</button>
+    </div>
+
+    <div id="map-legend">
+      <div class="legend-row"><span class="ld dot-online"></span>Активно</div>
+      <div class="legend-row"><span class="ld dot-warning"></span>Предупрежд.</div>
+      <div class="legend-row"><span class="ld dot-critical pulse-dot"></span>Тревога</div>
+      <div class="legend-row"><span class="ld dot-offline"></span>Оффлайн</div>
+      <div class="legend-row"><span class="ld dot-maintenance"></span>ТО</div>
+    </div>
+  </section>
+
+  <!-- ─────────── RIGHT PANEL ─────────── -->
+  <aside id="right-panel">
+    <!-- Device detail (shown on selection) -->
+    <div id="device-detail-panel" class="rpanel-section hidden">
+      <div class="rpanel-header">
+        <div class="dd-icon-wrap" title="Нажмите для загрузки иконки">
+          <span id="dd-icon" class="dd-icon">📹</span>
+          <input type="file" id="dd-icon-upload" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" />
+        </div>
+        <div class="dd-title-block">
+          <span id="dd-name" class="dd-name">—</span>
+          <span id="dd-serial" class="dd-serial">—</span>
+        </div>
+        <button class="close-btn" id="dd-close" title="Закрыть">✕</button>
+      </div>
+
+      <!-- Click on icon → trigger upload -->
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const wrap = document.querySelector('.dd-icon-wrap');
+          const inp  = document.getElementById('dd-icon-upload');
+          if (wrap && inp) wrap.addEventListener('click', () => inp.click());
+        });
+      </script>
+
+      <div class="dd-status-row">
+        <div class="status-badge" id="dd-status-badge">—</div>
+        <div class="mode-badge" id="dd-mode-badge">—</div>
+      </div>
+
+      <div class="dd-info-grid">
+        <div class="di-row"><span class="di-key">Модель</span><span class="di-val" id="dd-model">—</span></div>
+        <div class="di-row"><span class="di-key">IP</span><span class="di-val" id="dd-ip">—</span></div>
+        <div class="di-row" id="dd-port-row" style="display:none"><span class="di-key">Порт</span><span class="di-val" id="dd-port">—</span></div>
+        <div class="di-row"><span class="di-key">Прошивка</span><span class="di-val" id="dd-fw">—</span></div>
+        <div class="di-row"><span class="di-key">Ответственный</span><span class="di-val" id="dd-responsible">—</span></div>
+        <div class="di-row" id="dd-type-row" style="display:none"><span class="di-key">Тип устройства</span><span class="di-val" id="dd-device-type">—</span></div>
+        <div class="di-row" id="dd-priority-row" style="display:none"><span class="di-key">Приоритет</span><span class="di-val" id="dd-priority">—</span></div>
+        <div class="di-row" id="dd-extkey-row" style="display:none"><span class="di-key">Внешний ключ</span><span class="di-val" id="dd-external-key" style="font-family:monospace;font-size:11px">—</span></div>
+        <div class="di-row" id="dd-battery-row"><span class="di-key">Батарея</span>
+          <span class="di-val">
+            <span id="dd-battery-val">—</span>%
+            <div class="signal-bar-wrap"><div class="battery-bar" id="dd-battery-bar"></div></div>
+          </span>
+        </div>
+        <div class="di-row" id="dd-signal-row" style="display:none"><span class="di-key">Сигнал</span>
+          <span class="di-val">
+            <span id="dd-signal-val">—</span>%
+            <div class="signal-bar-wrap"><div class="battery-bar" id="dd-signal-bar"></div></div>
+          </span>
+        </div>
+        <div class="di-row"><span class="di-key">Последний пинг</span><span class="di-val" id="dd-last-seen">—</span></div>
+        <div class="di-row"><span class="di-key">Координаты</span><span class="di-val" id="dd-coords">—</span></div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="dd-section-title">ПОКАЗАТЕЛИ</div>
+      <div id="dd-metrics" class="dd-metrics"></div>
+
+      <!-- Quick actions -->
+      <div class="dd-actions">
+        <button class="action-btn" id="action-focus" title="Центрировать на карте">🎯 На карте</button>
+        <button class="action-btn action-warn" id="action-ack" title="Подтвердить инцидент">✓ Подтвердить</button>
+        <button class="action-btn action-maintenance" id="action-maintenance" title="Перевести в режим ТО">🔧 Перевести в ТО</button>
+      </div>
+    </div>
+
+    <!-- Placeholder when nothing selected -->
+    <div id="no-selection" class="rpanel-section">
+      <div class="no-sel-inner">
+        <span class="no-sel-icon">🗺</span>
+        <p>Выберите устройство<br>на карте или в списке</p>
+      </div>
+    </div>
+
+    <!-- Incident feed -->
+    <div class="rpanel-section" id="incident-section">
+      <div class="rpanel-header compact">
+        <span class="panel-title">ИНЦИДЕНТЫ</span>
+        <span class="panel-count" id="incident-count-badge">—</span>
+      </div>
+      <div id="incident-feed" class="incident-feed"></div>
+    </div>
+
+    <!-- System metrics panel -->
+    <div class="rpanel-section" id="sysmeta-section">
+      <div class="rpanel-header compact">
+        <span class="panel-title">СИСТЕМА</span>
+      </div>
+      <div class="sys-meta-grid">
+        <div class="sysm-row">
+          <span class="sysm-key">Всего устройств</span>
+          <span class="sysm-val" id="sm-total">—</span>
+        </div>
+        <div class="sysm-row">
+          <span class="sysm-key">Открытых инцидентов</span>
+          <span class="sysm-val warning-color" id="sm-open-inc">—</span>
+        </div>
+        <div class="sysm-row">
+          <span class="sysm-key">Критических</span>
+          <span class="sysm-val critical-color" id="sm-crit-inc">—</span>
+        </div>
+        <div class="sysm-row">
+          <span class="sysm-key">Клиентов WS</span>
+          <span class="sysm-val accent-color" id="sm-ws-clients">1</span>
+        </div>
+        <div class="sysm-row">
+          <span class="sysm-key">Обновление данных</span>
+          <span class="sysm-val" id="sm-last-update">—</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- ═══════════════════════ PANEL EDGE COLLAPSE ZONES ═══════════════════ -->
+<button class="panel-edge panel-edge--left" id="panel-edge-left" title="Свернуть / показать панель устройств">
+  <div class="panel-edge-inner">
+    <span class="panel-edge-arr" id="panel-edge-left-arr">◀</span>
+    <span class="panel-edge-lbl">УСТВ.</span>
+  </div>
+</button>
+<button class="panel-edge panel-edge--right" id="panel-edge-right" title="Свернуть / показать панель инцидентов">
+  <div class="panel-edge-inner">
+    <span class="panel-edge-arr" id="panel-edge-right-arr">▶</span>
+    <span class="panel-edge-lbl">ИНЦ.</span>
+  </div>
+</button>
+
+<!-- ═══════════════════════ NO-CONNECTION BORDER ════════════════════════ -->
+<div id="no-conn-border"></div>
+
+<!-- ═══════════════════════ EXTERNAL SERVER MODAL ═══════════════════════ -->
+<div id="ext-server-modal">
+  <div class="esm-card">
+    <button class="esm-close" id="esm-close-btn" title="Закрыть и продолжить работу">✕</button>
+    <span class="esm-icon">📡</span>
+    <div class="esm-title">Сервер данных недоступен</div>
+    <div class="esm-msg">
+      Нет связи с внешней системой передачи данных.<br>
+      Отображаемые данные могут быть устаревшими.
+    </div>
+    <div id="esm-error-text" class="esm-error"></div>
+    <div class="esm-dots">
+      <div class="esm-dot"></div>
+      <div class="esm-dot"></div>
+      <div class="esm-dot"></div>
+    </div>
+    <div class="esm-retry-label">Повторная проверка каждые 30 секунд</div>
+    <div class="esm-dismiss-hint">Закройте окно — работа продолжится, рамка экрана будет сигнализировать об отсутствии связи</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAINTENANCE MODAL ═══════════════════════════ -->
+<div id="maintenance-modal">
+  <div class="modal-card">
+    <h3>Перевод в режим ТО</h3>
+    <div class="modal-subtitle" id="mm-device-name"></div>
+    <textarea id="mm-comment" placeholder="Комментарий (причина обслуживания)…"></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="mm-cancel">Отмена</button>
+      <button class="modal-btn modal-btn-danger" id="mm-confirm">🔧 Перевести в ТО</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ INCIDENT STATUS MODAL ══════════════════════ -->
+<div id="incident-status-modal">
+  <div class="modal-card" style="width:480px">
+    <h3>Управление инцидентом</h3>
+    <div class="modal-subtitle" id="ism-title"></div>
+
+    <div class="ism-radios">
+      <label class="ism-radio-label">
+        <input type="radio" name="ism-status" value="open" />
+        🔴 Открыт
+      </label>
+      <label class="ism-radio-label">
+        <input type="radio" name="ism-status" value="in_progress" />
+        🟡 В работе
+      </label>
+      <label class="ism-radio-label">
+        <input type="radio" name="ism-status" value="closed" />
+        🟢 Закрыт
+      </label>
+    </div>
+
+    <div class="ism-comments-label">История комментариев</div>
+    <div id="ism-comments"></div>
+
+    <textarea id="ism-comment" placeholder="Комментарий к изменению статуса…"></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="ism-cancel">Отмена</button>
+      <button class="modal-btn modal-btn-confirm" id="ism-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TOAST CONTAINER ══════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════ DEVICE MANAGER OVERLAY ═══════════════════════ -->
+<div id="dm-overlay">
+  <div id="dm-panel">
+    <!-- Header -->
+    <div id="dm-header">
+      <span class="dm-title">Управление устройствами</span>
+      <div class="dm-tabs">
+        <button class="dm-tab active" data-tab="devices">Устройства</button>
+        <button class="dm-tab" data-tab="categories">Категории</button>
+        <button class="dm-tab" data-tab="zones">Зоны</button>
+      </div>
+      <button class="dm-close" id="dm-close" title="Закрыть">✕</button>
+    </div>
+
+    <!-- Content: list sections + shared form pane -->
+    <div id="dm-content">
+
+      <!-- ── Devices list ── -->
+      <div class="dm-section active" id="dm-devices">
+        <div class="dm-list-pane">
+          <div class="dm-list-toolbar">
+            <button class="btn btn-primary btn-sm" id="dm-dev-add">+ Добавить устройство</button>
+            <input type="text" class="dm-search" id="dm-dev-search" placeholder="Поиск по названию, серийному №..." />
+            <select class="dm-filter-select" id="dm-dev-cat-filter"><option value="">Все категории</option></select>
+          </div>
+          <div class="dm-list-body">
+            <table class="dm-table">
+              <thead>
+                <tr>
+                  <th class="td-id">#</th>
+                  <th class="td-icon">Иконка</th>
+                  <th>Название / Серийный №</th>
+                  <th>Категория</th>
+                  <th>Зона</th>
+                  <th class="td-act">Действия</th>
+                </tr>
+              </thead>
+              <tbody id="dm-dev-tbody">
+                <tr><td colspan="6" style="padding:32px;text-align:center;color:var(--txt-muted)">Загрузка...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Categories list ── -->
+      <div class="dm-section" id="dm-categories">
+        <div class="dm-list-pane">
+          <div class="dm-list-toolbar">
+            <button class="btn btn-primary btn-sm" id="dm-cat-add">+ Добавить категорию</button>
+            <input type="text" class="dm-search" id="dm-cat-search" placeholder="Поиск категорий..." />
+          </div>
+          <div class="dm-list-body">
+            <table class="dm-table">
+              <thead>
+                <tr>
+                  <th class="td-id">#</th>
+                  <th class="td-icon">Иконка</th>
+                  <th>Название / Код</th>
+                  <th>Цвет</th>
+                  <th>Вкладка</th>
+                  <th class="td-act">Действия</th>
+                </tr>
+              </thead>
+              <tbody id="dm-cat-tbody">
+                <tr><td colspan="6" style="padding:32px;text-align:center;color:var(--txt-muted)">Загрузка...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Zones list ── -->
+      <div class="dm-section" id="dm-zones">
+        <div class="dm-list-pane">
+          <div class="dm-list-toolbar">
+            <button class="btn btn-primary btn-sm" id="dm-zone-add">+ Добавить зону</button>
+            <input type="text" class="dm-search" id="dm-zone-search" placeholder="Поиск зон..." />
+          </div>
+          <div class="dm-list-body">
+            <table class="dm-table">
+              <thead>
+                <tr>
+                  <th class="td-id">#</th>
+                  <th>Название</th>
+                  <th>Код</th>
+                  <th>Координаты</th>
+                  <th>Радиус</th>
+                  <th class="td-act">Действия</th>
+                </tr>
+              </thead>
+              <tbody id="dm-zone-tbody">
+                <tr><td colspan="6" style="padding:32px;text-align:center;color:var(--txt-muted)">Загрузка...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Shared form pane (sibling to sections) ── -->
+      <div class="dm-form-pane hidden" id="dm-form-pane">
+        <div class="dm-form-header">
+          <span class="dm-form-title" id="dm-form-title">Форма</span>
+          <button class="btn btn-ghost btn-sm btn-icon" id="dm-form-close-btn" title="Закрыть">✕</button>
+        </div>
+        <div class="dm-form-body" id="dm-form-body"></div>
+        <div class="dm-form-footer">
+          <button class="btn btn-secondary btn-sm" id="dm-form-cancel">Отмена</button>
+          <button class="btn btn-primary btn-sm" id="dm-form-save">Сохранить</button>
+        </div>
+      </div>
+
+    </div><!-- /dm-content -->
+  </div><!-- /dm-panel -->
+</div><!-- /dm-overlay -->
+
+<!-- Delete confirm dialog -->
+<div class="dm-confirm" id="dm-confirm">
+  <div class="dm-confirm-card">
+    <div class="dm-confirm-icon">⚠</div>
+    <div class="dm-confirm-title">Подтверждение удаления</div>
+    <div class="dm-confirm-text">Удалить <strong id="dm-confirm-del-name"></strong>?<br>Это действие необратимо.</div>
+    <div class="dm-confirm-actions">
+      <button class="btn btn-secondary btn-sm" id="dm-confirm-cancel">Отмена</button>
+      <button class="btn btn-danger btn-sm" id="dm-confirm-ok">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ BOTTOM BAR ════════════════════════════════════ -->
+<footer id="bottombar">
+  <div class="bb-left">
+    <span class="bb-label">ЛЕНТА СОБЫТИЙ:</span>
+  </div>
+  <div class="bb-ticker-wrap">
+    <div class="bb-ticker" id="bb-ticker">
+      <span class="ticker-item info">Система инициализируется...</span>
+    </div>
+  </div>
+  <div class="bb-right">
+    <span id="bb-time-upd" class="bb-time-upd">—</span>
+  </div>
+</footer>
+
+<!-- ═══════════════════════ SUBSYSTEM TABS ════════════════════════════════ -->
+<nav id="subsystem-tabs"></nav>
+
+<!-- App JS (module order matters) -->
+<script src="/static/js/extStatus.js?v=7"></script>
+<script src="/static/js/store.js?v=7"></script>
+<script src="/static/js/api.js?v=7"></script>
+<script src="/static/js/socket.js?v=7"></script>
+<script src="/static/js/tabs.js?v=7"></script>
+<script src="/static/js/alertMode.js?v=7"></script>
+<script src="/static/js/map.js?v=8"></script>
+<script src="/static/js/sidebar.js?v=7"></script>
+<script src="/static/js/devicePanel.js?v=7"></script>
+<script src="/static/js/incidents.js?v=7"></script>
+<script src="/static/js/topbar.js?v=7"></script>
+<script src="/static/js/bottombar.js?v=7"></script>
+<script src="/static/js/deviceManager.js?v=3"></script>
+<script src="/static/js/profile.js?v=3"></script>
+<script src="/static/js/app.js?v=7"></script>
+
+<!-- Logo + maintenance modal wiring -->
+<script>
+(function () {
+  // Logo upload
+  const logoImg    = document.getElementById('topbar-logo');
+  const logoInput  = document.getElementById('topbar-logo-upload');
+  const fallbackI  = document.getElementById('logo-fallback-icon');
+  const fallbackT  = document.getElementById('logo-fallback-text');
+
+  async function _applyLogo(url) {
+    if (!url) return;
+    logoImg.src = url;
+    logoImg.style.display = '';
+    if (fallbackI) fallbackI.style.display = 'none';
+  }
+
+  // Fetch existing logo on load
+  fetch('/api/config/logo').then(r => r.json()).then(d => {
+    if (d.logo_url) _applyLogo(d.logo_url);
+  }).catch(() => {});
+
+  // Click logo to re-upload
+  if (logoImg) logoImg.addEventListener('click', () => logoInput.click());
+
+  if (logoInput) {
+    logoInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch('/api/config/logo', { method: 'POST', body: fd });
+        const d   = await res.json();
+        if (d.logo_url) _applyLogo(d.logo_url + '?t=' + Date.now());
+      } catch {}
+      logoInput.value = '';
+    });
+  }
+
+  // Maintenance modal wiring
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('maintenance-modal');
+    const cancel = document.getElementById('mm-cancel');
+    const confirm = document.getElementById('mm-confirm');
+
+    if (cancel) cancel.addEventListener('click', () => modal.classList.remove('visible'));
+    if (modal)  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('visible'); });
+
+    if (confirm) {
+      confirm.addEventListener('click', async () => {
+        const devId  = modal.dataset.deviceId;
+        if (!devId) return;
+        const comment = document.getElementById('mm-comment').value.trim();
+        confirm.disabled = true;
+        confirm.textContent = 'Переводим…';
+        try {
+          const res = await fetch(`/api/devices/${devId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operational_mode: 'maintenance', maintenance_comment: comment }),
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          // Refresh devices & incidents
+          const devices  = await fetch('/api/devices').then(r => r.json());
+          Store.set('devices', devices);
+          const incidents = await fetch('/api/incidents').then(r => r.json());
+          Store.set('incidents', incidents);
+          modal.classList.remove('visible');
+        } catch {
+          alert('Ошибка перевода в ТО');
+        } finally {
+          confirm.disabled = false;
+          confirm.textContent = '🔧 Перевести в ТО';
+        }
+      });
+    }
+  });
+})();
+</script>
+
+<!-- ═══════════════════════ PROFILE MODAL ═════════════════════════════════ -->
+<div class="prof-backdrop" id="prof-modal" aria-hidden="true">
+  <div class="prof-card">
+    <div class="prof-header">
+      <div class="prof-avatar" id="prof-avatar">👤</div>
+      <div class="prof-identity">
+        <div class="prof-fullname" id="prof-fullname">—</div>
+        <div class="prof-role-line">
+          <span class="prof-role-badge" id="prof-role-badge">—</span>
+          <span class="prof-office" id="prof-office">—</span>
+        </div>
+      </div>
+      <button class="prof-close" id="prof-close" title="Закрыть">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="prof-tabs">
+      <button class="prof-tab active" data-ptab="info">Информация</button>
+      <button class="prof-tab" data-ptab="edit">Редактировать</button>
+      <button class="prof-tab" data-ptab="security">Безопасность</button>
+    </div>
+
+    <!-- Info tab -->
+    <div class="prof-body" id="ptab-info">
+      <div class="prof-info-grid">
+        <div class="pi-row"><span class="pi-key">Логин</span><span class="pi-val" id="pf-username">—</span></div>
+        <div class="pi-row"><span class="pi-key">Должность</span><span class="pi-val" id="pf-jobtitle">—</span></div>
+        <div class="pi-row"><span class="pi-key">Телефон служебный (или ДЧ)</span><span class="pi-val" id="pf-phone">—</span></div>
+        <div class="pi-row"><span class="pi-key">АТС-Р</span><span class="pi-val" id="pf-phone-work">—</span></div>
+        <div class="pi-row"><span class="pi-key">Воинская часть</span><span class="pi-val" id="pf-office-info">—</span></div>
+        <div class="pi-row"><span class="pi-key">Роль</span><span class="pi-val" id="pf-role-info">—</span></div>
+        <div class="pi-row full"><span class="pi-key">Примечание</span><span class="pi-val" id="pf-notes-info">—</span></div>
+      </div>
+    </div>
+
+    <!-- Edit tab -->
+    <div class="prof-body hidden" id="ptab-edit">
+      <div class="prof-form">
+        <div class="pf-group">
+          <label class="pf-label">ФИО</label>
+          <input class="pf-control" id="pf-edit-fullname" placeholder="Фамилия Имя Отчество" />
+        </div>
+        <div class="pf-group">
+          <label class="pf-label">Должность</label>
+          <input class="pf-control" id="pf-edit-jobtitle" placeholder="Оперативный дежурный" />
+        </div>
+        <div class="pf-group">
+          <label class="pf-label">Телефон мобильный (или ДЧ)</label>
+          <input class="pf-control" id="pf-edit-phone" placeholder="+7 (___) ___-__-__" />
+        </div>
+        <div class="pf-group">
+          <label class="pf-label">АТС-Р</label>
+          <input class="pf-control" id="pf-edit-phone-work" placeholder="123456789" maxlength="9" pattern="[0-9]{9}" />
+        </div>
+        <div class="pf-group">
+          <label class="pf-label">Примечание</label>
+          <textarea class="pf-control" id="pf-edit-notes" rows="2" placeholder="Доп. информация..."></textarea>
+        </div>
+        <div class="pf-error" id="pf-edit-error" style="display:none"></div>
+        <div class="prof-footer">
+          <button class="pf-btn pf-btn-primary" id="pf-save-btn">Сохранить изменения</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security tab -->
+    <div class="prof-body hidden" id="ptab-security">
+      <div class="prof-form">
+        <div class="pf-group">
+          <label class="pf-label">Текущий пароль</label>
+          <div class="pf-pw-row">
+            <input class="pf-control" type="password" id="pf-cur-pwd" placeholder="Введите текущий пароль" />
+            <button class="pf-eye" type="button" id="pf-cur-eye">👁</button>
+          </div>
+        </div>
+        <div class="pf-group">
+          <label class="pf-label">Новый пароль</label>
+          <div class="pf-pw-row">
+            <input class="pf-control" type="password" id="pf-new-pwd" placeholder="Минимум 6 символов" />
+            <button class="pf-eye" type="button" id="pf-new-eye">👁</button>
+          </div>
+        </div>
+        <div class="pf-group">
+          <label class="pf-label">Подтверждение пароля</label>
+          <div class="pf-pw-row">
+            <input class="pf-control" type="password" id="pf-confirm-pwd" placeholder="Повторите новый пароль" />
+            <button class="pf-eye" type="button" id="pf-confirm-eye">👁</button>
+          </div>
+        </div>
+        <div class="pf-error" id="pf-pwd-error" style="display:none"></div>
+        <div class="prof-footer">
+          <button class="pf-btn pf-btn-primary" id="pf-change-pwd-btn">Изменить пароль</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

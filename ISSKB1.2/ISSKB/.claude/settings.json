@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python -c \"import matplotlib; print\\('matplotlib', matplotlib.__version__\\)\")",
+      "PowerShell(pip install matplotlib -q)",
+      "PowerShell(python -c \"import matplotlib; print\\('ok', matplotlib.__version__\\)\")"
+    ],
+    "additionalDirectories": [
+      "D:\\IS"
+    ]
+  }
+}

@@ -1,0 +1,133 @@
+/* ── CSS Variables ──────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-base:        #07090f;
+  --bg-surface:     #0b0f1a;
+  --bg-elevated:    #101725;
+  --bg-overlay:     #161e2e;
+  --bg-interactive: #1c2438;
+
+  /* Borders */
+  --border-dim:    rgba(255,255,255,0.03);
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-muted:  rgba(255,255,255,0.10);
+  --border-accent: rgba(59,130,246,0.25);
+
+  /* Brand / Accent */
+  --accent:       #2563eb;
+  --accent-br:    #3b82f6;
+  --accent-glow:  rgba(59,130,246,0.12);
+
+  /* Status */
+  --s-online:      #22c55e;
+  --s-online-g:    rgba(34,197,94,0.18);
+  --s-warning:     #eab308;
+  --s-warning-g:   rgba(234,179,8,0.18);
+  --s-critical:    #ef4444;
+  --s-critical-g:  rgba(239,68,68,0.22);
+  --s-offline:     #374151;
+  --s-offline-t:   #6b7280;
+  --s-maintenance: #8b5cf6;
+  --s-maintenance-g: rgba(139,92,246,0.18);
+  --s-patrol:      #06b6d4;
+  --s-patrol-g:    rgba(6,182,212,0.18);
+
+  /* Text */
+  --txt-primary:   #dde6f0;
+  --txt-secondary: #7d90a8;
+  --txt-muted:     #3d5068;
+  --txt-dim:       #253040;
+
+  /* Layout */
+  --topbar-h:      48px;
+  --bottombar-h:   38px;
+  --tabsbar-h:     42px;
+  --left-w:        272px;
+  --right-w:       308px;
+  --radius:        6px;
+  --radius-sm:     3px;
+  --radius-lg:     10px;
+  --panel-pad:     12px;
+  --transition:    0.18s ease;
+}
+
+/* ── Light theme overrides ──────────────────────────────────────────────── */
+body.light-theme {
+  --bg-base:        #f0f4f8;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #f1f5f9;
+  --bg-overlay:     #e2e8f0;
+  --bg-interactive: #cbd5e1;
+  --border-dim:     rgba(0,0,0,0.04);
+  --border-subtle:  rgba(0,0,0,0.08);
+  --border-muted:   rgba(0,0,0,0.14);
+  --txt-primary:    #0f172a;
+  --txt-secondary:  #334155;
+  --txt-muted:      #64748b;
+  --txt-dim:        #94a3b8;
+  --accent:         #1d4ed8;
+  --accent-br:      #2563eb;
+  --accent-glow:    rgba(37,99,235,0.10);
+  --s-online-g:     rgba(34,197,94,0.12);
+  --s-warning-g:    rgba(234,179,8,0.12);
+  --s-critical-g:   rgba(239,68,68,0.12);
+  --s-maintenance-g:rgba(139,92,246,0.12);
+  --s-patrol-g:     rgba(6,182,212,0.12);
+}
+
+/* Light theme map: CSS-invert dark tiles to light style */
+body.light-theme .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(95%);
+}
+
+/* ── Reset / Base ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  background: var(--bg-base);
+  color: var(--txt-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Utility ────────────────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+.online-color      { color: var(--s-online); }
+.warning-color     { color: var(--s-warning); }
+.critical-color    { color: var(--s-critical); }
+.offline-color     { color: var(--s-offline-t); }
+.maintenance-color { color: var(--s-maintenance); }
+.accent-color      { color: var(--accent-br); }
+
+/* Status dots */
+.dot-online      { background: var(--s-online); }
+.dot-warning     { background: var(--s-warning); }
+.dot-critical    { background: var(--s-critical); }
+.dot-offline     { background: var(--s-offline-t); }
+.dot-maintenance { background: var(--s-maintenance); }
+.dot-patrol      { background: var(--s-patrol); }
+
+/* Signal / battery bar */
+.signal-bar-wrap,
+.battery-bar-wrap {
+  width: 70px; height: 4px;
+  background: var(--bg-overlay);
+  border-radius: 2px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.signal-bar { height: 100%; background: var(--accent-br); border-radius: 2px; transition: width 0.5s ease; }
+.battery-bar { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-interactive); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-muted); }

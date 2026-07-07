@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Time\" -Recurse -Force | Select-Object FullName, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\){\"DIR\"}else{\"FILE\"}}} | Sort-Object FullName | Format-Table -AutoSize)",
+      "Read(//d/Time/**)",
+      "Read(//d/IS/**)",
+      "PowerShell(python --version)",
+      "PowerShell(python -c \"import matplotlib; print\\('matplotlib ok'\\)\" 2>$null)",
+      "PowerShell(python -c \"import PIL; print\\('PIL ok'\\)\" 2>$null)"
+    ]
+  }
+}

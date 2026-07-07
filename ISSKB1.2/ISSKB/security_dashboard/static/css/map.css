@@ -1,0 +1,209 @@
+/* ── Map container ─────────────────────────────────────────────────────── */
+#map-container {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+#map {
+  width: 100%; height: 100%;
+}
+
+/* ── Override Leaflet for dark theme ─────────────────────────────────── */
+.leaflet-container { background: var(--bg-base); }
+.leaflet-control-attribution {
+  background: rgba(7,9,15,0.75) !important;
+  color: var(--txt-muted) !important;
+  font-size: 9px !important;
+}
+.leaflet-control-attribution a { color: var(--accent-br) !important; }
+.leaflet-control-zoom a {
+  background: var(--bg-elevated) !important;
+  color: var(--txt-primary) !important;
+  border-color: var(--border-muted) !important;
+}
+.leaflet-control-zoom a:hover { background: var(--bg-overlay) !important; }
+
+/* ── Custom device markers ────────────────────────────────────────────── */
+.dev-marker {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.dev-marker:hover { transform: scale(1.15) translateY(-2px); z-index: 500 !important; }
+
+.dev-marker.s-active      { background: rgba(34,197,94,0.15);  border-color: var(--s-online);      }
+.dev-marker.s-idle        { background: rgba(59,130,246,0.12); border-color: var(--accent-br);      }
+.dev-marker.s-warning     { background: rgba(234,179,8,0.15);  border-color: var(--s-warning);     }
+.dev-marker.s-alarm       { background: rgba(239,68,68,0.18);  border-color: var(--s-critical);    }
+.dev-marker.s-offline     { background: rgba(55,65,81,0.4);    border-color: var(--s-offline);     opacity:0.7;}
+.dev-marker.s-maintenance { background: rgba(139,92,246,0.15); border-color: var(--s-maintenance); }
+.dev-marker.s-patrol      { background: rgba(6,182,212,0.15);  border-color: var(--s-patrol);      }
+
+/* Alarm pulse ring */
+.dev-marker.s-alarm::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--s-critical);
+  animation: markerAlarm 1.4s ease-out infinite;
+}
+
+.dev-marker.selected {
+  transform: scale(1.25) translateY(-3px);
+  box-shadow: 0 0 16px rgba(59,130,246,0.5), 0 4px 12px rgba(0,0,0,0.6);
+  border-color: var(--accent-br) !important;
+  z-index: 600 !important;
+}
+
+/* ── Device name labels ───────────────────────────────────────────────── */
+.dev-marker-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: visible;
+}
+.dev-label {
+  display: none;
+  margin-top: 3px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.8);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  line-height: 1.2;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dev-label.label-visible { display: block; }
+
+/* ── Leaflet popup dark ───────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-muted) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6) !important;
+  color: var(--txt-primary) !important;
+  min-width: 180px;
+}
+.leaflet-popup-tip { background: var(--bg-elevated) !important; }
+.leaflet-popup-close-button { color: var(--txt-secondary) !important; }
+.leaflet-popup-close-button:hover { color: var(--txt-primary) !important; }
+
+.map-popup-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.map-popup-row   { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: var(--txt-secondary); margin-bottom: 2px; }
+.map-popup-row span:last-child { color: var(--txt-primary); }
+.map-popup-btn {
+  display: block; width: 100%; margin-top: 8px;
+  background: var(--accent); border: none; border-radius: var(--radius-sm);
+  color: #fff; font-size: 11px; padding: 5px; cursor: pointer;
+  transition: background var(--transition);
+}
+.map-popup-btn:hover { background: var(--accent-br); }
+
+/* ── Map toolbar ──────────────────────────────────────────────────────── */
+#map-toolbar {
+  position: absolute;
+  top: 12px; left: 12px;
+  z-index: 700;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.map-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--txt-muted);
+  font-size: 15px;
+  line-height: 1;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.map-btn:hover  { background: var(--bg-overlay); color: var(--txt-secondary); border-color: var(--border-muted); }
+.map-btn.active { background: var(--bg-interactive); color: var(--txt-primary); border-color: var(--border-muted); }
+.map-btn-sep    { height: 4px; }
+
+/* ── Map legend ───────────────────────────────────────────────────────── */
+#map-legend {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  z-index: 700;
+  background: rgba(11,15,26,0.85);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  backdrop-filter: blur(4px);
+}
+.legend-row {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 10px; color: var(--txt-secondary);
+  margin-bottom: 4px;
+}
+.legend-row:last-child { margin-bottom: 0; }
+.ld {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Detection range circles ──────────────────────────────────────────── */
+/* Circles are Leaflet SVG paths — animate via className on the SVG path */
+.range-circle path {
+  animation: rangePulse 4s ease-in-out infinite;
+}
+.range-alarm path {
+  animation: rangePulse 1s ease-in-out infinite !important;
+}
+.range-warn path {
+  animation: rangePulse 2s ease-in-out infinite !important;
+}
+.range-inactive path {
+  animation: none !important;
+}
+.range-tooltip {
+  background: rgba(11,15,26,0.9);
+  border: 1px solid var(--border-subtle);
+  color: var(--txt-secondary);
+  font-size: 10px;
+  border-radius: 4px;
+  padding: 3px 8px;
+  box-shadow: none;
+}
+
+@keyframes rangePulse {
+  0%,100% { fill-opacity: 0.06; stroke-opacity: 0.30; }
+  50%      { fill-opacity: 0.16; stroke-opacity: 0.65; }
+}
+
+/* Light theme overrides */
+body.light-theme #map-legend       { background: rgba(248,250,252,0.9); }
+body.light-theme .range-tooltip    { background: rgba(248,250,252,0.92); color: #374151; }
+body.light-theme .leaflet-popup-content-wrapper { background: #fff !important; color: #111 !important; }
+body.light-theme .leaflet-popup-tip { background: #fff !important; }
+
+/* Mobile patrol heading arrow */
+.patrol-arrow {
+  position: absolute;
+  top: -8px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 8px solid var(--s-patrol);
+}

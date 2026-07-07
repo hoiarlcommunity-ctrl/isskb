@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — Техническая документация</title>
+<style>
+  :root {
+    --accent: #1d4ed8;
+    --accent-light: #dbeafe;
+    --dark: #0f172a;
+    --gray: #64748b;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --red: #dc2626;
+    --green: #16a34a;
+    --orange: #d97706;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: #1e293b;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  /* Cover */
+  .cover {
+    background: var(--dark);
+    color: #fff;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: rgba(29,78,216,0.25);
+  }
+  .cover-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 20px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .cover h1 span { color: #3b82f6; }
+  .cover .subtitle {
+    font-size: 18px;
+    color: #94a3b8;
+    margin-bottom: 40px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    border-top: 1px solid #1e293b;
+    padding-top: 30px;
+    flex-wrap: wrap;
+  }
+  .cover-meta-item label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 4px;
+  }
+  .cover-meta-item span { font-size: 14px; color: #cbd5e1; }
+  /* Layout */
+  .wrapper { max-width: 960px; margin: 0 auto; padding: 40px 40px 80px; }
+  /* TOC */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  .toc h3 { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); margin-bottom: 12px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 4px; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  /* Sections */
+  .section { margin-bottom: 52px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-num {
+    background: var(--accent);
+    color: #fff;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section h2 { font-size: 20px; font-weight: 600; color: var(--dark); }
+  h3 { font-size: 15px; font-weight: 600; color: #334155; margin: 20px 0 10px; }
+  p { margin-bottom: 12px; color: #334155; }
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .card-icon { font-size: 22px; margin-bottom: 8px; }
+  .card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray); margin-bottom: 4px; }
+  .card p { font-size: 13px; color: var(--dark); margin: 0; font-weight: 500; }
+  /* Table */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  thead tr { background: var(--dark); color: #fff; }
+  thead th { padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .b-pk   { background: #fef3c7; color: #92400e; }
+  .b-fk   { background: #dbeafe; color: #1d4ed8; }
+  .b-uq   { background: #d1fae5; color: #065f46; }
+  .b-idx  { background: #ede9fe; color: #5b21b6; }
+  .b-nn   { background: #fee2e2; color: #991b1b; }
+  .b-opt  { background: #f1f5f9; color: #475569; }
+  /* Code */
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 12px;
+    color: #be185d;
+  }
+  pre {
+    background: var(--dark);
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 12px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    line-height: 1.6;
+  }
+  pre .cm { color: #475569; }
+  pre .kw { color: #7dd3fc; }
+  pre .st { color: #86efac; }
+  pre .nm { color: #fca5a5; }
+  /* Info box */
+  .info-box {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #1e3a8a;
+  }
+  .warn-box {
+    background: #fff7ed;
+    border-left: 4px solid var(--orange);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #78350f;
+  }
+  /* Tech stack list */
+  .stack-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stack-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .stack-item .s-name { font-weight: 600; font-size: 13px; color: var(--dark); }
+  .stack-item .s-role { font-size: 11px; color: var(--gray); }
+  .stack-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 7px;
+    border-radius: 3px;
+    background: var(--dark);
+    color: #94a3b8;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  /* ER Diagram */
+  .er-wrap {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 32px 20px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+  svg text { font-family: 'Segoe UI', Arial, sans-serif; }
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .flow-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dark);
+    text-align: center;
+  }
+  .flow-arrow {
+    font-size: 18px;
+    color: var(--accent);
+    padding: 0 6px;
+  }
+  /* Entity title */
+  .entity-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .entity-header {
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .entity-header h4 { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+  .entity-header .e-desc { font-size: 12px; color: #94a3b8; }
+  .entity-body { padding: 0; }
+  /* API endpoints */
+  .ep { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .ep:last-child { border-bottom: none; }
+  .method {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 3px; flex-shrink: 0; margin-top: 2px;
+  }
+  .m-get  { background: #d1fae5; color: #065f46; }
+  .m-post { background: #dbeafe; color: #1d4ed8; }
+  .m-patch{ background: #fef3c7; color: #92400e; }
+  .ep-path { font-family: monospace; font-size: 13px; color: #be185d; }
+  .ep-desc { font-size: 12px; color: var(--gray); display: block; margin-top: 2px; }
+  /* Requirements */
+  .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .req-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .req-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray); margin-bottom: 10px; }
+  .req-card ul { padding-left: 16px; }
+  .req-card li { font-size: 13px; margin-bottom: 5px; color: #334155; }
+  /* Status */
+  .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .status-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+  .status-icon { font-size: 28px; margin-bottom: 6px; }
+  .status-card h4 { font-size: 12px; color: var(--gray); margin-bottom: 4px; }
+  .status-card .sv { font-size: 20px; font-weight: 700; color: var(--dark); }
+  /* Print */
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ОБЛОЖКА -->
+<div class="cover">
+  <div class="cover-label">Техническая документация · Версия 1.0</div>
+  <h1><span>СКБ</span> Управление</h1>
+  <div class="subtitle">Система мониторинга и управления безопасностью объекта</div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><label>Дата</label><span>Июнь 2026</span></div>
+    <div class="cover-meta-item"><label>Статус</label><span>Опытная эксплуатация</span></div>
+    <div class="cover-meta-item"><label>Платформа</label><span>Windows 11 / Docker</span></div>
+    <div class="cover-meta-item"><label>Версия БД</label><span>PostgreSQL 16</span></div>
+    <div class="cover-meta-item"><label>Версия ПО</label><span>Python 3.13 / FastAPI</span></div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+<!-- ОГЛАВЛЕНИЕ -->
+<div class="toc">
+  <h3>Содержание</h3>
+  <ol>
+    <li><a href="#s1">Назначение системы</a></li>
+    <li><a href="#s2">Технические требования</a></li>
+    <li><a href="#s3">Технологический стек</a></li>
+    <li><a href="#s4">Архитектура системы</a></li>
+    <li><a href="#s5">База данных — ER-диаграмма</a></li>
+    <li><a href="#s6">Описание сущностей БД</a></li>
+    <li><a href="#s7">API — интерфейс взаимодействия</a></li>
+    <li><a href="#s8">Картографический модуль</a></li>
+    <li><a href="#s9">Текущий статус и этапы разработки</a></li>
+    <li><a href="#s10">Направления развития</a></li>
+  </ol>
+</div>
+
+<!-- 1. НАЗНАЧЕНИЕ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <h2>Назначение системы</h2>
+  </div>
+  <p>
+    <strong>SENTINEL Command Center</strong> — программный комплекс для централизованного мониторинга технических средств охраны, контроля за состоянием периметра и оперативного реагирования на инциденты безопасности. Система предназначена для развёртывания на охраняемых объектах с разнородным парком оборудования.
+  </p>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🗺️</div>
+      <h4>Карта объекта</h4>
+      <p>Интерактивная карта с нанесёнными устройствами, зонами охраны и зонами обнаружения в реальном времени</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📡</div>
+      <h4>Мониторинг устройств</h4>
+      <p>Отображение состояния, режима работы, заряда, сигнала и специфичных метрик каждого устройства</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚠️</div>
+      <h4>Управление инцидентами</h4>
+      <p>Регистрация, классификация, отслеживание статуса тревог и событий безопасности</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h4>Телеметрия</h4>
+      <p>История метрик устройств: температура, напряжение, количество срабатываний и прочие параметры</p>
+    </div>
+  </div>
+
+  <h3>Функциональные возможности</h3>
+  <ul style="padding-left:18px;color:#334155;">
+    <li style="margin-bottom:6px">Отображение устройств на интерактивной карте с цветовой индикацией статуса (онлайн / тревога / ТО / патруль / оффлайн)</li>
+    <li style="margin-bottom:6px">Круги зон обнаружения/подавления вокруг устройств с анимацией при активном режиме</li>
+    <li style="margin-bottom:6px">Группировка устройств по категориям и подсистемам (вкладки: СКУД, пожарная безопасность, моторизованные объекты и др.)</li>
+    <li style="margin-bottom:6px">Панель детальной информации по каждому устройству с историей метрик</li>
+    <li style="margin-bottom:6px">Бегущая лента событий с классификацией по критичности</li>
+    <li style="margin-bottom:6px">Работа в тёмном и светлом режиме интерфейса</li>
+    <li style="margin-bottom:6px">Поддержка оффлайн-карт (без доступа к интернету на объекте)</li>
+    <li style="margin-bottom:6px">Загрузка произвольных иконок для устройств и категорий</li>
+    <li style="margin-bottom:6px">Готовый WebSocket-интерфейс для подключения источников данных реального времени</li>
+  </ul>
+</div>
+
+<!-- 2. ТРЕБОВАНИЯ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <h2>Технические требования</h2>
+  </div>
+  <div class="req-grid">
+    <div class="req-card">
+      <h4>Серверная часть (минимум)</h4>
+      <ul>
+        <li>ОС: Windows 10/11 или Linux</li>
+        <li>CPU: 2 ядра / 2.0 ГГц</li>
+        <li>RAM: 4 ГБ</li>
+        <li>Диск: 10 ГБ (без карт) / 30+ ГБ (с картами)</li>
+        <li>Python 3.11+</li>
+        <li>Docker Desktop (для PostgreSQL)</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <h4>Серверная часть (рекомендуется)</h4>
+      <ul>
+        <li>CPU: 4+ ядра</li>
+        <li>RAM: 8 ГБ</li>
+        <li>SSD: 50+ ГБ</li>
+        <li>Сеть: 100 Мбит/с (LAN)</li>
+        <li>UPS / бесперебойное питание</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <h4>Клиентский браузер</h4>
+      <ul>
+        <li>Chrome 100+ / Edge 100+ / Firefox 100+</li>
+        <li>Разрешение: от 1280×768</li>
+        <li>JavaScript обязателен</li>
+        <li>Рекомендуется: 1920×1080 и выше</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <h4>Программные зависимости</h4>
+      <ul>
+        <li>FastAPI, Uvicorn</li>
+        <li>asyncpg, python-multipart</li>
+        <li>websockets</li>
+        <li>PostgreSQL 16 (Docker)</li>
+        <li>Leaflet.js 1.9 (клиент)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 3. СТЕК -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <h2>Технологический стек</h2>
+  </div>
+  <div class="stack-list">
+    <div class="stack-item">
+      <div class="stack-badge">BACK</div>
+      <div>
+        <div class="s-name">Python 3.13 + FastAPI</div>
+        <div class="s-role">Основной сервер приложения. Асинхронная обработка HTTP-запросов и WebSocket-соединений. Автоматическая генерация OpenAPI документации.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">ASGI</div>
+      <div>
+        <div class="s-name">Uvicorn</div>
+        <div class="s-role">Высокопроизводительный ASGI-сервер на базе uvloop. Обслуживает HTTP и WebSocket соединения одновременно.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">БД</div>
+      <div>
+        <div class="s-name">PostgreSQL 16 (Docker)</div>
+        <div class="s-role">Реляционная СУБД. Поддержка JSONB-полей для гибких метрик. Запущена в изолированном Docker-контейнере.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">ORM</div>
+      <div>
+        <div class="s-name">asyncpg</div>
+        <div class="s-role">Нативный асинхронный драйвер PostgreSQL для Python. Пул соединений, автоматическая сериализация JSONB, параметризованные запросы.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">FRONT</div>
+      <div>
+        <div class="s-name">Vanilla JS (ES2022)</div>
+        <div class="s-role">Клиентская часть без фреймворков. Собственная реализация реактивного хранилища данных (Store) на паттерне pub/sub.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">КАРТА</div>
+      <div>
+        <div class="s-name">Leaflet.js 1.9</div>
+        <div class="s-role">Интерактивная картографическая библиотека. Поддержка оффлайн-тайлов, SVG-слоёв, кастомных маркеров и анимированных кругов.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">INFRA</div>
+      <div>
+        <div class="s-name">Docker Desktop</div>
+        <div class="s-role">Контейнеризация PostgreSQL. Изоляция СУБД от хостовой ОС, простой запуск и резервное копирование.</div>
+      </div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-badge">TILES</div>
+      <div>
+        <div class="s-name">CartoDB / ESRI (оффлайн)</div>
+        <div class="s-role">Тайловые карты, закачанные локально. Тёмная схема (CartoDB Dark Matter) + спутниковые снимки (ESRI World Imagery). Работают без интернета.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. АРХИТЕКТУРА -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <h2>Архитектура системы</h2>
+  </div>
+
+  <h3>Общая схема потока данных</h3>
+  <div class="flow">
+    <div class="flow-box">Источник данных<br><small style="color:#64748b">устройства / интеграция</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">FastAPI<br><small style="color:#64748b">REST API / WebSocket</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">asyncpg<br><small style="color:#64748b">pool соединений</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">PostgreSQL<br><small style="color:#64748b">Docker</small></div>
+  </div>
+  <div class="flow" style="margin-top:-10px">
+    <div class="flow-box">Браузер<br><small style="color:#64748b">HTML + JS</small></div>
+    <div class="flow-arrow">←</div>
+    <div class="flow-box">Store (pub/sub)<br><small style="color:#64748b">реактивный state</small></div>
+    <div class="flow-arrow">←</div>
+    <div class="flow-box">fetch / WebSocket<br><small style="color:#64748b">api.js / socket.js</small></div>
+    <div class="flow-arrow">←</div>
+    <div class="flow-box">FastAPI<br><small style="color:#64748b">JSON-ответы</small></div>
+  </div>
+
+  <h3>Структура файлов проекта</h3>
+  <pre><span class="cm">security_dashboard/</span>
+├── <span class="kw">main.py</span>               <span class="cm"># Точка входа: lifespan, роутеры, WebSocket</span>
+├── <span class="kw">database/</span>
+│   ├── <span class="nm">connection.py</span>     <span class="cm"># asyncpg pool, DSN, зависимость get_db_conn</span>
+│   ├── <span class="nm">migrations.py</span>     <span class="cm"># CREATE TABLE при старте (идемпотентно)</span>
+│   └── <span class="nm">seed.py</span>           <span class="cm"># Начальные данные (запускается если БД пуста)</span>
+├── <span class="kw">api/</span>
+│   ├── <span class="nm">devices.py</span>        <span class="cm"># CRUD устройств, загрузка иконок</span>
+│   ├── <span class="nm">incidents.py</span>      <span class="cm"># Получение и обновление инцидентов</span>
+│   ├── <span class="nm">zones.py</span>          <span class="cm"># Зоны охраны, общая статистика</span>
+│   └── <span class="nm">categories.py</span>     <span class="cm"># Категории устройств, иконки категорий</span>
+├── <span class="kw">static/</span>
+│   ├── <span class="nm">index.html</span>        <span class="cm"># Единственная HTML-страница (SPA)</span>
+│   ├── <span class="nm">css/</span>              <span class="cm"># Стили по модулям (global, map, sidebar...)</span>
+│   ├── <span class="nm">js/</span>               <span class="cm"># Клиентская логика по модулям</span>
+│   │   ├── store.js      <span class="cm"># Реактивное хранилище (Store.set/get/on)</span>
+│   │   ├── app.js        <span class="cm"># Bootstrap, начальная загрузка данных</span>
+│   │   ├── api.js        <span class="cm"># HTTP-клиент</span>
+│   │   ├── map.js        <span class="cm"># Leaflet карта, маркеры, круги</span>
+│   │   ├── sidebar.js    <span class="cm"># Список устройств</span>
+│   │   ├── devicePanel.js <span class="cm"># Панель детали устройства</span>
+│   │   ├── incidents.js  <span class="cm"># Панель инцидентов</span>
+│   │   ├── bottombar.js  <span class="cm"># Бегущая строка событий</span>
+│   │   ├── tabs.js       <span class="cm"># Вкладки подсистем</span>
+│   │   └── socket.js     <span class="cm"># WebSocket клиент</span>
+│   └── <span class="nm">icons/</span>            <span class="cm"># Загруженные иконки устройств и категорий</span>
+└── <span class="kw">tiles/</span>
+    ├── <span class="nm">dark/</span>             <span class="cm"># CartoDB Dark Matter z0–16 (оффлайн)</span>
+    └── <span class="nm">sat/</span>              <span class="cm"># ESRI World Imagery z0–15 (оффлайн)</span></pre>
+
+  <h3>Клиентская архитектура (Frontend)</h3>
+  <p>Фронтенд построен без фреймворков на паттерне <strong>реактивного хранилища</strong>. Все модули общаются через единый объект <code>Store</code>:</p>
+  <div class="info-box">
+    <strong>Store.set('devices', data)</strong> → все компоненты, подписанные через <strong>Store.on('devices', handler)</strong>, получают обновление одновременно. Карта перерисовывает маркеры, боковая панель обновляет список, бегущая строка перестраивает ленту — без прямых зависимостей между модулями.
+  </div>
+
+  <h3>Жизненный цикл сервера (Lifespan)</h3>
+  <pre><span class="cm"># При старте сервера (main.py):</span>
+1. <span class="kw">run_migrations()</span>   <span class="cm">→ применяет DDL (CREATE TABLE IF NOT EXISTS)</span>
+2. <span class="kw">create_pool()</span>      <span class="cm">→ asyncpg pool: 2–10 соединений к PostgreSQL</span>
+3. <span class="kw">run_seed()</span>         <span class="cm">→ начальные данные (только если devices = 0)</span>
+<span class="cm"># При остановке:</span>
+4. <span class="kw">close_pool()</span>       <span class="cm">→ graceful shutdown всех соединений</span></pre>
+</div>
+
+<!-- 5. ER ДИАГРАММА -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <h2>База данных — ER-диаграмма</h2>
+  </div>
+
+  <div class="er-wrap">
+    <svg viewBox="0 0 920 620" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:760px">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+        </marker>
+        <marker id="arr-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#7dd3fc"/>
+        </marker>
+      </defs>
+
+      <!-- ── device_categories ── -->
+      <rect x="20" y="20" width="200" height="150" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="20" y="20" width="200" height="30" rx="6" fill="#1d4ed8"/>
+      <rect x="20" y="44" width="200" height="6" fill="#1d4ed8"/>
+      <text x="120" y="40" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">device_categories</text>
+      <text x="30" y="72" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="100" y="72" fill="#94a3b8" font-size="10">SERIAL PK</text>
+      <text x="30" y="90" fill="#86efac" font-size="11" font-family="Consolas,monospace">⚡ code</text><text x="100" y="90" fill="#94a3b8" font-size="10">VARCHAR UNIQUE</text>
+      <text x="30" y="107" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  name</text><text x="100" y="107" fill="#94a3b8" font-size="10">VARCHAR(100)</text>
+      <text x="30" y="124" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  icon</text><text x="100" y="124" fill="#94a3b8" font-size="10">VARCHAR(10)</text>
+      <text x="30" y="141" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  icon_path</text><text x="100" y="141" fill="#94a3b8" font-size="10">VARCHAR(500)</text>
+      <text x="30" y="158" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  color</text><text x="100" y="158" fill="#94a3b8" font-size="10">VARCHAR(20)</text>
+
+      <!-- ── zones ── -->
+      <rect x="700" y="20" width="210" height="185" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="700" y="20" width="210" height="30" rx="6" fill="#065f46"/>
+      <rect x="700" y="44" width="210" height="6" fill="#065f46"/>
+      <text x="805" y="40" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">zones</text>
+      <text x="710" y="72" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="770" y="72" fill="#94a3b8" font-size="10">SERIAL PK</text>
+      <text x="710" y="90" fill="#86efac" font-size="11" font-family="Consolas,monospace">⚡ code</text><text x="770" y="90" fill="#94a3b8" font-size="10">VARCHAR UNIQUE</text>
+      <text x="710" y="107" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  name</text><text x="770" y="107" fill="#94a3b8" font-size="10">VARCHAR(100)</text>
+      <text x="710" y="124" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  color</text><text x="770" y="124" fill="#94a3b8" font-size="10">VARCHAR(20)</text>
+      <text x="710" y="141" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  description</text><text x="790" y="141" fill="#94a3b8" font-size="10">TEXT</text>
+      <text x="710" y="158" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  lat_center</text><text x="790" y="158" fill="#94a3b8" font-size="10">DECIMAL(10,7)</text>
+      <text x="710" y="175" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  lon_center</text><text x="790" y="175" fill="#94a3b8" font-size="10">DECIMAL(10,7)</text>
+      <text x="710" y="192" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  radius_m</text><text x="790" y="192" fill="#94a3b8" font-size="10">INTEGER</text>
+
+      <!-- ── devices (центр) ── -->
+      <rect x="300" y="220" width="320" height="240" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+      <rect x="300" y="220" width="320" height="30" rx="6" fill="#1d4ed8"/>
+      <rect x="300" y="244" width="320" height="6" fill="#1d4ed8"/>
+      <text x="460" y="240" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">devices</text>
+      <text x="310" y="268" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="370" y="268" fill="#94a3b8" font-size="10">SERIAL PK</text>
+      <text x="310" y="285" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 category_id</text><text x="410" y="285" fill="#94a3b8" font-size="10">FK → device_categories</text>
+      <text x="310" y="302" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 zone_id</text><text x="410" y="302" fill="#94a3b8" font-size="10">FK → zones (NULL)</text>
+      <text x="310" y="319" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  name</text><text x="370" y="319" fill="#94a3b8" font-size="10">VARCHAR(200) NOT NULL</text>
+      <text x="310" y="336" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  serial_number</text><text x="410" y="336" fill="#94a3b8" font-size="10">VARCHAR(100) NULL</text>
+      <text x="310" y="353" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  model / manufacturer</text><text x="460" y="353" fill="#94a3b8" font-size="10">VARCHAR NULL</text>
+      <text x="310" y="370" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  ip_address</text><text x="410" y="370" fill="#94a3b8" font-size="10">VARCHAR(50) NULL</text>
+      <text x="310" y="387" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  is_mobile</text><text x="410" y="387" fill="#94a3b8" font-size="10">BOOLEAN DEFAULT FALSE</text>
+      <text x="310" y="404" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  detection_ranges</text><text x="430" y="404" fill="#94a3b8" font-size="10">JSONB DEFAULT '[]'</text>
+      <text x="310" y="421" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  icon_path</text><text x="410" y="421" fill="#94a3b8" font-size="10">VARCHAR(500)</text>
+      <text x="310" y="438" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  created_at</text><text x="410" y="438" fill="#94a3b8" font-size="10">TIMESTAMPTZ DEFAULT NOW()</text>
+      <text x="310" y="455" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  installation_date</text><text x="440" y="455" fill="#94a3b8" font-size="10">DATE NULL</text>
+
+      <!-- ── device_positions ── -->
+      <rect x="20" y="430" width="220" height="175" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="20" y="430" width="220" height="30" rx="6" fill="#4c1d95"/>
+      <rect x="20" y="454" width="220" height="6" fill="#4c1d95"/>
+      <text x="130" y="450" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">device_positions</text>
+      <text x="30" y="478" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="90" y="478" fill="#94a3b8" font-size="10">BIGSERIAL PK</text>
+      <text x="30" y="495" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 device_id</text><text x="110" y="495" fill="#94a3b8" font-size="10">FK → devices</text>
+      <text x="30" y="512" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  latitude</text><text x="110" y="512" fill="#94a3b8" font-size="10">DECIMAL(10,7)</text>
+      <text x="30" y="529" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  longitude</text><text x="110" y="529" fill="#94a3b8" font-size="10">DECIMAL(10,7)</text>
+      <text x="30" y="546" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  heading</text><text x="110" y="546" fill="#94a3b8" font-size="10">DECIMAL(5,2)</text>
+      <text x="30" y="563" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  speed</text><text x="110" y="563" fill="#94a3b8" font-size="10">DECIMAL(6,2)</text>
+      <text x="30" y="580" fill="#86efac" font-size="11" font-family="Consolas,monospace">  is_current</text><text x="110" y="580" fill="#94a3b8" font-size="10">BOOLEAN ⬅ текущая</text>
+      <text x="30" y="597" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  recorded_at</text><text x="110" y="597" fill="#94a3b8" font-size="10">TIMESTAMPTZ</text>
+
+      <!-- ── device_states ── -->
+      <rect x="300" y="490" width="220" height="130" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="300" y="490" width="220" height="30" rx="6" fill="#7c2d12"/>
+      <rect x="300" y="514" width="220" height="6" fill="#7c2d12"/>
+      <text x="410" y="510" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">device_states</text>
+      <text x="310" y="538" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="370" y="538" fill="#94a3b8" font-size="10">SERIAL PK</text>
+      <text x="310" y="555" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 device_id</text><text x="390" y="555" fill="#94a3b8" font-size="10">FK UNIQUE (1:1)</text>
+      <text x="310" y="572" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  online_status</text><text x="410" y="572" fill="#94a3b8" font-size="10">BOOLEAN</text>
+      <text x="310" y="589" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  operational_mode</text><text x="450" y="589" fill="#94a3b8" font-size="10">VARCHAR</text>
+      <text x="310" y="606" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  extra_state</text><text x="400" y="606" fill="#94a3b8" font-size="10">JSONB {'}'}</text>
+
+      <!-- ── device_metrics ── -->
+      <rect x="580" y="430" width="220" height="160" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="580" y="430" width="220" height="30" rx="6" fill="#14532d"/>
+      <rect x="580" y="454" width="220" height="6" fill="#14532d"/>
+      <text x="690" y="450" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">device_metrics</text>
+      <text x="590" y="478" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="640" y="478" fill="#94a3b8" font-size="10">BIGSERIAL PK</text>
+      <text x="590" y="495" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 device_id</text><text x="670" y="495" fill="#94a3b8" font-size="10">FK → devices</text>
+      <text x="590" y="512" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  metric_key</text><text x="670" y="512" fill="#94a3b8" font-size="10">VARCHAR(100)</text>
+      <text x="590" y="529" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  metric_value</text><text x="680" y="529" fill="#94a3b8" font-size="10">DECIMAL(15,4)</text>
+      <text x="590" y="546" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  unit</text><text x="640" y="546" fill="#94a3b8" font-size="10">VARCHAR(20)</text>
+      <text x="590" y="563" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  payload</text><text x="650" y="563" fill="#94a3b8" font-size="10">JSONB (опц.)</text>
+      <text x="590" y="580" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  recorded_at</text><text x="680" y="580" fill="#94a3b8" font-size="10">TIMESTAMPTZ ⬅ индекс</text>
+
+      <!-- ── incidents ── -->
+      <rect x="580" y="220" width="220" height="185" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="580" y="220" width="220" height="30" rx="6" fill="#7f1d1d"/>
+      <rect x="580" y="244" width="220" height="6" fill="#7f1d1d"/>
+      <text x="690" y="240" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">incidents</text>
+      <text x="590" y="268" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="640" y="268" fill="#94a3b8" font-size="10">UUID PK (auto)</text>
+      <text x="590" y="285" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 device_id</text><text x="670" y="285" fill="#94a3b8" font-size="10">FK → devices (NULL)</text>
+      <text x="590" y="302" fill="#7dd3fc" font-size="11" font-family="Consolas,monospace">🔗 zone_id</text><text x="660" y="302" fill="#94a3b8" font-size="10">FK → zones (NULL)</text>
+      <text x="590" y="319" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  severity</text><text x="660" y="319" fill="#94a3b8" font-size="10">critical/high/med/low</text>
+      <text x="590" y="336" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  type / title</text><text x="680" y="336" fill="#94a3b8" font-size="10">VARCHAR</text>
+      <text x="590" y="353" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  status</text><text x="650" y="353" fill="#94a3b8" font-size="10">open/ack/resolved...</text>
+      <text x="590" y="370" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  created_at</text><text x="670" y="370" fill="#94a3b8" font-size="10">TIMESTAMPTZ</text>
+      <text x="590" y="387" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  acknowledged_at</text><text x="710" y="387" fill="#94a3b8" font-size="10">TIMESTAMPTZ</text>
+      <text x="590" y="404" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  resolved_at</text><text x="670" y="404" fill="#94a3b8" font-size="10">TIMESTAMPTZ</text>
+
+      <!-- ── operators ── -->
+      <rect x="700" y="430" width="200" height="115" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <rect x="700" y="430" width="200" height="30" rx="6" fill="#374151"/>
+      <rect x="700" y="454" width="200" height="6" fill="#374151"/>
+      <text x="800" y="450" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">operators</text>
+      <text x="710" y="478" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑 id</text><text x="760" y="478" fill="#94a3b8" font-size="10">SERIAL PK</text>
+      <text x="710" y="495" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  name</text><text x="760" y="495" fill="#94a3b8" font-size="10">VARCHAR(200)</text>
+      <text x="710" y="512" fill="#86efac" font-size="11" font-family="Consolas,monospace">⚡ badge_number</text><text x="822" y="512" fill="#94a3b8" font-size="10">UNIQUE</text>
+      <text x="710" y="529" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  role</text><text x="760" y="529" fill="#94a3b8" font-size="10">VARCHAR(50)</text>
+      <text x="710" y="546" fill="#e2e8f0" font-size="11" font-family="Consolas,monospace">  active</text><text x="760" y="546" fill="#94a3b8" font-size="10">BOOLEAN</text>
+
+      <!-- СВЯЗИ -->
+      <!-- device_categories → devices (1:M) -->
+      <line x1="220" y1="95" x2="300" y2="290" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+      <text x="230" y="185" fill="#7dd3fc" font-size="10">1 : M</text>
+
+      <!-- zones → devices (1:M) -->
+      <line x1="700" y1="120" x2="620" y2="290" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+      <text x="652" y="195" fill="#7dd3fc" font-size="10">1 : M</text>
+
+      <!-- zones → incidents -->
+      <line x1="750" y1="205" x2="720" y2="220" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+
+      <!-- devices → device_positions -->
+      <line x1="300" y1="380" x2="240" y2="430" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+      <text x="215" y="415" fill="#94a3b8" font-size="10">1 : M</text>
+
+      <!-- devices → device_states (1:1) -->
+      <line x1="410" y1="460" x2="410" y2="490" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+      <text x="418" y="480" fill="#94a3b8" font-size="10">1:1</text>
+
+      <!-- devices → device_metrics (1:M) -->
+      <line x1="580" y1="370" x2="620" y2="430" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+      <text x="610" y="407" fill="#94a3b8" font-size="10">1:M</text>
+
+      <!-- devices → incidents (1:M) -->
+      <line x1="620" y1="310" x2="580" y2="310" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+      <text x="590" y="305" fill="#94a3b8" font-size="10">1:M</text>
+
+      <!-- incidents → operators -->
+      <line x1="690" y1="405" x2="760" y2="430" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+
+      <!-- Легенда -->
+      <rect x="20" y="255" width="240" height="70" rx="4" fill="#0f172a" stroke="#1e293b"/>
+      <text x="30" y="275" fill="#64748b" font-size="11" font-weight="600">Обозначения:</text>
+      <line x1="30" y1="290" x2="70" y2="290" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="78" y="294" fill="#94a3b8" font-size="10">Внешний ключ (FK)</text>
+      <text x="30" y="314" fill="#fca5a5" font-size="11" font-family="Consolas,monospace">🔑</text>
+      <text x="46" y="315" fill="#94a3b8" font-size="10">Первичный ключ (PK)</text>
+      <text x="140" y="314" fill="#86efac" font-size="11" font-family="Consolas,monospace">⚡</text>
+      <text x="155" y="315" fill="#94a3b8" font-size="10">UNIQUE индекс</text>
+    </svg>
+  </div>
+</div>
+
+<!-- 6. ОПИСАНИЕ СУЩНОСТЕЙ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <h2>Описание сущностей базы данных</h2>
+  </div>
+
+  <!-- device_categories -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>device_categories — Категории устройств</h4>
+      <span class="e-desc">Справочник типов охранного оборудования</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td><code>SERIAL</code></td><td><span class="badge b-pk">PK</span></td><td>Автоинкрементный идентификатор</td></tr>
+          <tr><td><code>code</code></td><td><code>VARCHAR(50)</code></td><td><span class="badge b-uq">UNIQUE</span> <span class="badge b-nn">NOT NULL</span></td><td>Системный код: <code>PTZ</code>, <code>RFID</code>, <code>DRONE</code> и т.д.</td></tr>
+          <tr><td><code>name</code></td><td><code>VARCHAR(100)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td>Человекочитаемое название на русском</td></tr>
+          <tr><td><code>icon</code></td><td><code>VARCHAR(10)</code></td><td><span class="badge b-opt">NULL</span></td><td>Эмодзи-иконка по умолчанию (📷, 🔒 и др.)</td></tr>
+          <tr><td><code>icon_path</code></td><td><code>VARCHAR(500)</code></td><td><span class="badge b-opt">NULL</span></td><td>Путь к загруженному файлу иконки (приоритет над emoji)</td></tr>
+          <tr><td><code>color</code></td><td><code>VARCHAR(20)</code></td><td>DEFAULT <code>'#3b82f6'</code></td><td>HEX-цвет для отображения маркеров на карте</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- zones -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>zones — Зоны охраны</h4>
+      <span class="e-desc">Географические зоны объекта: периметр, здания, секторы</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td><code>SERIAL</code></td><td><span class="badge b-pk">PK</span></td><td>Автоинкрементный идентификатор</td></tr>
+          <tr><td><code>code</code></td><td><code>VARCHAR(50)</code></td><td><span class="badge b-uq">UNIQUE</span></td><td>Код зоны: <code>ZONE_A</code>, <code>PERIMETER</code></td></tr>
+          <tr><td><code>name</code></td><td><code>VARCHAR(100)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td>Название зоны</td></tr>
+          <tr><td><code>color</code></td><td><code>VARCHAR(20)</code></td><td>DEFAULT синий</td><td>Цвет отображения на карте</td></tr>
+          <tr><td><code>lat_center</code></td><td><code>DECIMAL(10,7)</code></td><td><span class="badge b-opt">NULL</span></td><td>Широта центра зоны</td></tr>
+          <tr><td><code>lon_center</code></td><td><code>DECIMAL(10,7)</code></td><td><span class="badge b-opt">NULL</span></td><td>Долгота центра зоны</td></tr>
+          <tr><td><code>radius_m</code></td><td><code>INTEGER</code></td><td>DEFAULT 200</td><td>Радиус зоны в метрах (для отображения окружности)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- devices -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>devices — Устройства</h4>
+      <span class="e-desc">Центральная сущность. Любое охранное оборудование на объекте.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td><code>SERIAL</code></td><td><span class="badge b-pk">PK</span></td><td>Системный идентификатор</td></tr>
+          <tr><td><code>category_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> <span class="badge b-nn">NOT NULL</span></td><td>Ссылка на тип устройства</td></tr>
+          <tr><td><code>zone_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> <span class="badge b-opt">NULL</span></td><td>Приписанная зона охраны (необязательно)</td></tr>
+          <tr><td><code>name</code></td><td><code>VARCHAR(200)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td>Наименование устройства</td></tr>
+          <tr><td><code>serial_number</code></td><td><code>VARCHAR(100)</code></td><td><span class="badge b-opt">NULL</span></td><td>Серийный номер</td></tr>
+          <tr><td><code>manufacturer</code></td><td><code>VARCHAR(100)</code></td><td><span class="badge b-opt">NULL</span></td><td>Производитель</td></tr>
+          <tr><td><code>ip_address</code></td><td><code>VARCHAR(50)</code></td><td><span class="badge b-opt">NULL</span></td><td>IP-адрес устройства в сети</td></tr>
+          <tr><td><code>firmware_version</code></td><td><code>VARCHAR(50)</code></td><td><span class="badge b-opt">NULL</span></td><td>Версия прошивки</td></tr>
+          <tr><td><code>installation_date</code></td><td><code>DATE</code></td><td><span class="badge b-opt">NULL</span></td><td>Дата установки</td></tr>
+          <tr><td><code>is_mobile</code></td><td><code>BOOLEAN</code></td><td>DEFAULT FALSE</td><td>Признак подвижного объекта (патруль, дрон и т.д.)</td></tr>
+          <tr><td><code>detection_ranges</code></td><td><code>JSONB</code></td><td>DEFAULT <code>[]</code></td><td>Массив зон обнаружения: <code>[{"label":"Зона","radius_m":500,"color":"#3b82f6"}]</code></td></tr>
+          <tr><td><code>icon_path</code></td><td><code>VARCHAR(500)</code></td><td><span class="badge b-opt">NULL</span></td><td>Индивидуальная иконка устройства на карте</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- device_positions -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>device_positions — История позиций</h4>
+      <span class="e-desc">Только для мобильных объектов (is_mobile=TRUE). Запись is_current=TRUE — текущая позиция.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td><code>BIGSERIAL</code></td><td><span class="badge b-pk">PK</span></td><td>Большой автоинкремент (высокая частота записей)</td></tr>
+          <tr><td><code>device_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> CASCADE DELETE</td><td>Ссылка на устройство</td></tr>
+          <tr><td><code>latitude</code></td><td><code>DECIMAL(10,7)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td>Широта (7 знаков — точность ~1 см)</td></tr>
+          <tr><td><code>longitude</code></td><td><code>DECIMAL(10,7)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td>Долгота</td></tr>
+          <tr><td><code>heading</code></td><td><code>DECIMAL(5,2)</code></td><td><span class="badge b-opt">NULL</span></td><td>Курс движения в градусах (0–360°)</td></tr>
+          <tr><td><code>speed</code></td><td><code>DECIMAL(6,2)</code></td><td>DEFAULT 0</td><td>Скорость в км/ч</td></tr>
+          <tr><td><code>is_current</code></td><td><code>BOOLEAN</code></td><td><span class="badge b-idx">INDEX</span></td><td>TRUE = актуальная позиция; история — FALSE. Записи старше 24ч очищаются.</td></tr>
+          <tr><td><code>recorded_at</code></td><td><code>TIMESTAMPTZ</code></td><td>DEFAULT NOW()</td><td>Метка времени фиксации позиции</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- device_states -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>device_states — Текущее состояние устройств</h4>
+      <span class="e-desc">Связь 1:1 с devices. Всегда актуальный снимок. Поле extra_state — расширяемый JSON.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>device_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> <span class="badge b-uq">UNIQUE</span></td><td>Один-к-одному с устройством</td></tr>
+          <tr><td><code>online_status</code></td><td><code>BOOLEAN</code></td><td>DEFAULT FALSE</td><td>Доступность устройства (онлайн/оффлайн)</td></tr>
+          <tr><td><code>operational_mode</code></td><td><code>VARCHAR(50)</code></td><td>DEFAULT 'idle'</td><td>Режим: <code>active</code>, <code>idle</code>, <code>alarm</code>, <code>warning</code>, <code>patrol</code>, <code>maintenance</code></td></tr>
+          <tr><td><code>battery_level</code></td><td><code>SMALLINT</code></td><td><span class="badge b-opt">NULL</span></td><td>Уровень заряда 0–100% (для беспроводных)</td></tr>
+          <tr><td><code>signal_strength</code></td><td><code>SMALLINT</code></td><td>DEFAULT 0</td><td>Качество сигнала 0–100</td></tr>
+          <tr><td><code>last_heartbeat</code></td><td><code>TIMESTAMPTZ</code></td><td><span class="badge b-opt">NULL</span></td><td>Последний пинг от устройства</td></tr>
+          <tr><td><code>error_code</code></td><td><code>VARCHAR(50)</code></td><td><span class="badge b-opt">NULL</span></td><td>Код последней ошибки</td></tr>
+          <tr><td><code>extra_state</code></td><td><code>JSONB</code></td><td>DEFAULT <code>{}</code></td><td>Гибкие параметры: PTZ→<code>{"fps":25,"pan":120}</code>, датчик→<code>{"smoke":0.02}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- device_metrics -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>device_metrics — Телеметрия (временной ряд)</h4>
+      <span class="e-desc">История измерений. В отличие от device_states — не перезаписывается, а накапливается для графиков и трендов.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td><code>BIGSERIAL</code></td><td><span class="badge b-pk">PK</span></td><td>Высокая частота вставки — BIGSERIAL</td></tr>
+          <tr><td><code>device_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> <span class="badge b-idx">INDEX</span></td><td>Устройство-источник</td></tr>
+          <tr><td><code>metric_key</code></td><td><code>VARCHAR(100)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td>Ключ метрики: <code>temperature</code>, <code>voltage</code>, <code>rpm</code></td></tr>
+          <tr><td><code>metric_value</code></td><td><code>DECIMAL(15,4)</code></td><td><span class="badge b-opt">NULL</span></td><td>Числовое значение</td></tr>
+          <tr><td><code>unit</code></td><td><code>VARCHAR(20)</code></td><td><span class="badge b-opt">NULL</span></td><td>Единица: <code>°C</code>, <code>V</code>, <code>%</code></td></tr>
+          <tr><td><code>payload</code></td><td><code>JSONB</code></td><td><span class="badge b-opt">NULL</span></td><td>Составные данные: несколько значений за одну запись</td></tr>
+          <tr><td><code>recorded_at</code></td><td><code>TIMESTAMPTZ</code></td><td><span class="badge b-idx">INDEX</span></td><td>Метка времени — основа для временных графиков</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- incidents -->
+  <div class="entity-section">
+    <div class="entity-header">
+      <h4>incidents — Инциденты безопасности</h4>
+      <span class="e-desc">Регистрация тревог, нарушений, событий. UUID-первичный ключ исключает коллизии при репликации.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Поле</th><th>Тип</th><th>Ограничения</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td><code>UUID</code></td><td><span class="badge b-pk">PK</span> gen_random_uuid()</td><td>Глобально уникальный идентификатор</td></tr>
+          <tr><td><code>device_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> SET NULL</td><td>Устройство, зафиксировавшее инцидент (необязательно)</td></tr>
+          <tr><td><code>zone_id</code></td><td><code>INTEGER</code></td><td><span class="badge b-fk">FK</span> SET NULL</td><td>Зона происшествия (необязательно)</td></tr>
+          <tr><td><code>severity</code></td><td><code>VARCHAR(20)</code></td><td><span class="badge b-nn">NOT NULL</span></td><td><code>critical</code> / <code>high</code> / <code>medium</code> / <code>low</code></td></tr>
+          <tr><td><code>status</code></td><td><code>VARCHAR(30)</code></td><td>DEFAULT 'open'</td><td><code>open</code> → <code>acknowledged</code> → <code>in_progress</code> → <code>resolved</code></td></tr>
+          <tr><td><code>acknowledged_at</code></td><td><code>TIMESTAMPTZ</code></td><td><span class="badge b-opt">NULL</span></td><td>Время принятия к рассмотрению оператором</td></tr>
+          <tr><td><code>resolved_at</code></td><td><code>TIMESTAMPTZ</code></td><td><span class="badge b-opt">NULL</span></td><td>Время закрытия инцидента</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Индексы базы данных</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Индекс</th><th>Таблица</th><th>Поля</th><th>Назначение</th></tr></thead>
+      <tbody>
+        <tr><td><code>idx_metrics_device_time</code></td><td>device_metrics</td><td>device_id, recorded_at DESC</td><td>Быстрый запрос истории метрик по устройству за период</td></tr>
+        <tr><td><code>idx_positions_current</code></td><td>device_positions</td><td>device_id, is_current DESC</td><td>Мгновенный доступ к актуальной позиции мобильного объекта</td></tr>
+        <tr><td><code>idx_incidents_status_time</code></td><td>incidents</td><td>status, created_at DESC</td><td>Фильтрация открытых/критичных инцидентов по времени</td></tr>
+        <tr><td><code>idx_device_states_device</code></td><td>device_states</td><td>device_id</td><td>JOIN при получении сводки по всем устройствам</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 7. API -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <h2>API — интерфейс взаимодействия</h2>
+  </div>
+  <p>Все эндпоинты отдают JSON. Базовый URL: <code>http://&lt;host&gt;:8000</code>. Документация OpenAPI доступна по адресу <code>/docs</code>.</p>
+
+  <h3>Устройства <code>/api/devices</code></h3>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px 20px;">
+    <div class="ep"><span class="method m-get">GET</span><div><div class="ep-path">/api/devices</div><span class="ep-desc">Список всех устройств с текущим состоянием, позицией, зонами обнаружения</span></div></div>
+    <div class="ep"><span class="method m-get">GET</span><div><div class="ep-path">/api/devices/{id}</div><span class="ep-desc">Детальная карточка устройства + последние 10 значений каждой метрики</span></div></div>
+    <div class="ep"><span class="method m-post">POST</span><div><div class="ep-path">/api/devices/{id}/icon</div><span class="ep-desc">Загрузка иконки устройства (multipart/form-data, PNG/JPG/SVG/WebP)</span></div></div>
+  </div>
+
+  <h3>Инциденты <code>/api/incidents</code></h3>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px 20px;">
+    <div class="ep"><span class="method m-get">GET</span><div><div class="ep-path">/api/incidents?status=open&severity=critical&limit=50</div><span class="ep-desc">Список инцидентов с фильтрацией по статусу и критичности</span></div></div>
+    <div class="ep"><span class="method m-patch">PATCH</span><div><div class="ep-path">/api/incidents/{uuid}</div><span class="ep-desc">Обновление статуса инцидента (acknowledged, resolved, false_alarm...)</span></div></div>
+  </div>
+
+  <h3>Зоны и статистика <code>/api/zones</code></h3>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px 20px;">
+    <div class="ep"><span class="method m-get">GET</span><div><div class="ep-path">/api/zones</div><span class="ep-desc">Список зон с количеством устройств в каждой</span></div></div>
+    <div class="ep"><span class="method m-get">GET</span><div><div class="ep-path">/api/zones/stats</div><span class="ep-desc">Сводная статистика: онлайн/оффлайн/тревога/ТО + активные инциденты</span></div></div>
+  </div>
+
+  <h3>Категории <code>/api/categories</code></h3>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px 20px;">
+    <div class="ep"><span class="method m-get">GET</span><div><div class="ep-path">/api/categories</div><span class="ep-desc">Список категорий устройств</span></div></div>
+    <div class="ep"><span class="method m-post">POST</span><div><div class="ep-path">/api/categories/{id}/icon</div><span class="ep-desc">Загрузка иконки категории</span></div></div>
+  </div>
+
+  <h3>WebSocket <code>/ws</code></h3>
+  <div class="info-box">
+    Эндпоинт <strong>ws://host:8000/ws</strong> готов для приёма и рассылки событий реального времени. Инфраструктура соединения реализована; требует подключения источника данных (интеграция с внешними системами).
+  </div>
+</div>
+
+<!-- 8. КАРТЫ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <h2>Картографический модуль</h2>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Слой</th><th>Источник</th><th>Покрытие</th><th>Макс. zoom</th><th>Объём</th></tr></thead>
+      <tbody>
+        <tr><td>Тёмная схема</td><td>CartoDB Dark Matter</td><td>Вся Россия</td><td>z16 (Козельский р-н)</td><td>~700 МБ</td></tr>
+        <tr><td>Спутниковая</td><td>ESRI World Imagery</td><td>Центр. Россия + Козельский р-н</td><td>z15 (Козельский р-н)</td><td>~1 ГБ</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Тайлы хранятся локально в папке <code>tiles/</code> и раздаются FastAPI-сервером. Карта работает <strong>полностью без доступа в интернет</strong>. Загрузка новых тайлов — скриптом <code>download_tiles.py</code> с параметрами региона и уровня детализации.</p>
+</div>
+
+<!-- 9. СТАТУС -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">9</div>
+    <h2>Текущий статус и этапы разработки</h2>
+  </div>
+
+  <div class="status-grid">
+    <div class="status-card"><div class="status-icon">✅</div><h4>Завершено</h4><div class="sv" style="color:var(--green);font-size:14px;font-weight:600">Инфраструктура, БД, UI</div></div>
+    <div class="status-card"><div class="status-icon">🔄</div><h4>Статус</h4><div class="sv" style="font-size:14px;font-weight:600">Опытная эксплуатация</div></div>
+    <div class="status-card"><div class="status-icon">📋</div><h4>В разработке</h4><div class="sv" style="color:var(--orange);font-size:14px;font-weight:600">Интеграция данных</div></div>
+  </div>
+
+  <div class="tbl-wrap" style="margin-top:20px">
+    <table>
+      <thead><tr><th>Этап</th><th>Описание</th><th>Статус</th></tr></thead>
+      <tbody>
+        <tr><td>1. База данных</td><td>Проектирование схемы PostgreSQL, миграции, начальные данные</td><td>✅ Готово</td></tr>
+        <tr><td>2. REST API</td><td>Эндпоинты устройств, инцидентов, зон, категорий</td><td>✅ Готово</td></tr>
+        <tr><td>3. Карта</td><td>Leaflet, маркеры, круги зон обнаружения, слои, оффлайн-тайлы</td><td>✅ Готово</td></tr>
+        <tr><td>4. Интерфейс</td><td>Sidebar, панели, бегущая строка, вкладки, тёмная/светлая тема</td><td>✅ Готово</td></tr>
+        <tr><td>5. Оффлайн-карты</td><td>Загрузка тайлов для Козельского района (dark z16, sat z15)</td><td>✅ Готово</td></tr>
+        <tr><td>6. WebSocket</td><td>Инфраструктура real-time соединения</td><td>⚙️ Готово (без источника)</td></tr>
+        <tr><td>7. Интеграция данных</td><td>Подключение реального оборудования / внешних систем</td><td>🔜 Следующий этап</td></tr>
+        <tr><td>8. Авторизация</td><td>Аутентификация операторов, ролевой доступ</td><td>🔜 Планируется</td></tr>
+        <tr><td>9. Уведомления</td><td>Звуковые/визуальные тревоги, push-уведомления</td><td>🔜 Планируется</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 10. РАЗВИТИЕ -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <h2>Направления развития</h2>
+  </div>
+  <div class="req-grid">
+    <div class="req-card">
+      <h4>Интеграция с оборудованием</h4>
+      <ul>
+        <li>REST/SOAP API внешних систем</li>
+        <li>ONVIF (IP-камеры)</li>
+        <li>MQTT (IoT-датчики)</li>
+        <li>RS-232/RS-485 (legacy оборудование)</li>
+        <li>GPS-трекеры (HTTP push)</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <h4>Безопасность</h4>
+      <ul>
+        <li>JWT-авторизация операторов</li>
+        <li>Ролевая модель (оператор / старший / администратор)</li>
+        <li>Audit log всех действий</li>
+        <li>HTTPS / TLS</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <h4>Аналитика</h4>
+      <ul>
+        <li>Дашборды по метрикам (графики временных рядов)</li>
+        <li>Отчёты по инцидентам</li>
+        <li>Тепловые карты активности</li>
+        <li>Экспорт в PDF / Excel</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <h4>Масштабирование</h4>
+      <ul>
+        <li>Развёртывание на выделенном сервере</li>
+        <li>Репликация PostgreSQL</li>
+        <li>Резервное копирование БД</li>
+        <li>Мобильный клиент (планшет)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top:20px">
+    <strong>Текущие ограничения:</strong> система работает с демонстрационными данными. Реальные данные устройств поступают через API-интеграцию, которая реализуется на следующем этапе. WebSocket-канал для push-обновлений готов к подключению источника данных.
+  </div>
+</div>
+
+<div style="text-align:center;color:#94a3b8;font-size:11px;padding:30px 0 0;border-top:1px solid var(--border);">
+  SENTINEL Command Center · Техническая документация v1.0 · Июнь 2026
+</div>
+
+</div>
+</body>
+</html>

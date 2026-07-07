@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ИП СКБ | Авторизация</title>
+  <link rel="icon" type="image/png" href="/static/logo/logo.png">
+  <link rel="stylesheet" href="/static/css/global.css" />
+  <link rel="stylesheet" href="/static/css/login.css" />
+  <style>
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(5px); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .login-card { animation: fadeIn 0.45s cubic-bezier(.22,.68,0,1.2) both; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ ФОН ═══════════════════════════════════════════ -->
+<div class="login-bg">
+  <img
+    class="login-bg-img"
+    src="/static/logo/logo.png"
+    alt=""
+    onerror="this.style.display='none'; document.querySelector('.login-bg-fallback').style.display='block';"
+  />
+  <div class="login-bg-fallback" style="display:none"></div>
+  <div class="login-bg-glass"></div>
+</div>
+
+<!-- ═══════════════════════ ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ ════════════════════════════ -->
+<button class="theme-toggle" id="theme-toggle" title="Сменить тему">☀️</button>
+
+<!-- ═══════════════════════ КАРТОЧКА ВХОДА ════════════════════════════════ -->
+<div class="login-center">
+  <div class="login-card">
+
+    <!-- Заголовок -->
+    <div class="login-header">
+      <span class="login-hex"><img src="/static/logo/logo.png" alt="" width="50"></span>
+      <div class="login-brand">
+        <span class="login-brand-title">Интеграционная платформа      скб</span>
+            </div>
+    </div>
+
+    <!-- Сообщение об ошибке -->
+    <div id="login-error" class="login-error" style="display:none"></div>
+
+    <!-- Форма -->
+    <form id="login-form" autocomplete="on" novalidate>
+
+      <div class="login-field">
+        <label for="f-username">Имя пользователя</label>
+        <input
+          id="f-username"
+          type="text"
+          name="username"
+          autocomplete="username"
+          spellcheck="false"
+          placeholder="Введите логин"
+        />
+      </div>
+
+      <div class="login-field">
+        <label for="f-password">Пароль</label>
+        <div class="pw-wrap">
+          <input
+            id="f-password"
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            placeholder="Введите пароль"
+          />
+          <button type="button" class="pw-toggle" id="pw-toggle" tabindex="-1" title="Показать пароль">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="login-btn" id="login-btn">Авторизация</button>
+
+    </form>
+
+    <div class="login-footer">центр внедрения и развития <br> перспективных технологий</div>
+  </div>
+</div>
+
+
+<script src="/static/js/login.js"></script>
+</body>
+</html>

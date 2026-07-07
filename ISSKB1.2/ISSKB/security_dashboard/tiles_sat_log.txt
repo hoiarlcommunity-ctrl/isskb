@@ -1,0 +1,14 @@
+
+  SENTINEL — Offline Map Tile Downloader
+  Bounding box: Central Russia (27°E–68°E, 47°N–63°N)
+
+
+========================================================
+  Style   : SAT · Central Russia z0-10
+  Zoom    : 0 – 10
+  Tiles   : ~13,091
+  Workers : 8
+  Output  : D:\change_mgmt_app\security_dashboard\tiles\sat
+========================================================
+  Downloading... (Ctrl+C to abort, progress saves)
+
