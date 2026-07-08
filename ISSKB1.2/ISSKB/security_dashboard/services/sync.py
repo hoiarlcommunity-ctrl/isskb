@@ -176,6 +176,10 @@ async def sync_to_main(
             k: v for k, v in rec.items()
             if k not in _ALL_KNOWN
         }
+        # Explicit JSON text is safer with asyncpg prepared statements.
+        # Without ::jsonb casts PostgreSQL may fail with:
+        # "could not determine data type of parameter $6".
+        extra_state_json = json.dumps(extra_state, ensure_ascii=False, default=str)
 
         # All non-fixed fields → extra_data in ext_devices (for reference)
         extra_data = {
@@ -212,17 +216,17 @@ async def sync_to_main(
             # Update devices table (operational metadata from external source)
             await conn.execute(
                 """UPDATE devices SET
-                       ip_address   = COALESCE($1, ip_address),
-                       external_key = COALESCE($2, external_key),
-                       port         = COALESCE($3, port),
-                       priority     = COALESCE($4, priority),
-                       device_type  = COALESCE($5, device_type),
-                       description  = CASE WHEN $6 IS NOT NULL AND description IS NULL
-                                          THEN $6 ELSE description END,
-                       icon_path    = CASE WHEN $7 IS NOT NULL AND icon_path IS NULL
-                                          THEN $7 ELSE icon_path END,
-                       updated_at   = $8
-                   WHERE id = $9""",
+                       ip_address   = COALESCE($1::text, ip_address),
+                       external_key = COALESCE($2::text, external_key),
+                       port         = COALESCE($3::integer, port),
+                       priority     = COALESCE($4::smallint, priority),
+                       device_type  = COALESCE($5::text, device_type),
+                       description  = CASE WHEN $6::text IS NOT NULL AND description IS NULL
+                                          THEN $6::text ELSE description END,
+                       icon_path    = CASE WHEN $7::text IS NOT NULL AND icon_path IS NULL
+                                          THEN $7::text ELSE icon_path END,
+                       updated_at   = $8::timestamptz
+                   WHERE id = $9::integer""",
                 ip_address, external_key, port, priority, device_type,
                 description, icon_path, now, dev_id,
             )
@@ -233,17 +237,17 @@ async def sync_to_main(
                 """UPDATE device_states
                    SET online_status    = $1,
                        operational_mode = $2,
-                       battery_level    = COALESCE($3, battery_level),
-                       signal_strength  = COALESCE($4, signal_strength),
-                       error_code       = COALESCE($5, error_code),
-                       extra_state      = extra_state || $6,
-                       last_seen        = $7,
-                       last_heartbeat   = $7,
-                       updated_at       = $7
-                   WHERE device_id = $8""",
+                       battery_level    = COALESCE($3::smallint, battery_level),
+                       signal_strength  = COALESCE($4::smallint, signal_strength),
+                       error_code       = COALESCE($5::text, error_code),
+                       extra_state      = COALESCE(extra_state, '{}'::jsonb) || $6::jsonb,
+                       last_seen        = $7::timestamptz,
+                       last_heartbeat   = $7::timestamptz,
+                       updated_at       = $7::timestamptz
+                   WHERE device_id = $8::integer""",
                 online, mode,
                 battery_level, signal_strength, error_code,
-                extra_state,  # dict — asyncpg JSONB encoder, no double-encoding
+                extra_state_json,
                 now, dev_id,
             )
 
@@ -253,11 +257,11 @@ async def sync_to_main(
                     """UPDATE device_positions
                        SET latitude    = $1,
                            longitude   = $2,
-                           altitude    = COALESCE($3, altitude),
-                           heading     = COALESCE($4, heading),
-                           speed       = COALESCE($5, speed),
-                           recorded_at = $6
-                       WHERE device_id = $7 AND is_current = TRUE""",
+                           altitude    = COALESCE($3::numeric, altitude),
+                           heading     = COALESCE($4::numeric, heading),
+                           speed       = COALESCE($5::numeric, speed),
+                           recorded_at = $6::timestamptz
+                       WHERE device_id = $7::integer AND is_current = TRUE""",
                     lat, lon, altitude, heading, speed, now, dev_id,
                 )
                 if res == "UPDATE 0":
@@ -296,10 +300,10 @@ async def sync_to_main(
                        (device_id, online_status, operational_mode,
                         battery_level, signal_strength, error_code,
                         extra_state, last_seen, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)""",
+                   VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $8)""",
                 dev_id, online, mode,
                 battery_level, signal_strength, error_code,
-                extra_state,  # dict — asyncpg JSONB encoder
+                extra_state_json,
                 now,
             )
             created += 1

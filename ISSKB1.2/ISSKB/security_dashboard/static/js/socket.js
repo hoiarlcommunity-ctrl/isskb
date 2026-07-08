@@ -34,6 +34,37 @@ const Socket = (() => {
     ws.onerror = () => ws.close();
   }
 
+  function _mergeDevice(device) {
+    if (!device || device.id == null) return;
+    if (typeof Store.upsertDevice === 'function') {
+      Store.upsertDevice(device);
+      return;
+    }
+    // Fallback для старого store.js
+    const devices = Store.get('devices') || [];
+    const idx = devices.findIndex(d => Number(d.id) === Number(device.id));
+    if (idx >= 0) devices[idx] = { ...devices[idx], ...device };
+    else devices.push(device);
+    Store.set('devices', [...devices]);
+  }
+
+  let _reloadDevicesTimer = null;
+  function _scheduleDevicesReload(delayMs = 5000) {
+    // Reload only for real structural changes (new/deleted devices), not for
+    // every telemetry update. Frequent /api/devices reloads were the reason
+    // IMD cards/markers blinked and ПОКАЗАТЕЛИ disappeared.
+    if (_reloadDevicesTimer) return;
+    _reloadDevicesTimer = setTimeout(() => {
+      _reloadDevicesTimer = null;
+      API.getDevices()
+        .then(devs => {
+          if (typeof Store.mergeDevices === 'function') Store.mergeDevices(devs);
+          else Store.set('devices', devs);
+        })
+        .catch(() => {});
+    }, delayMs);
+  }
+
   function handleMessage(msg) {
     switch (msg.type) {
       case 'state_update':
@@ -51,15 +82,9 @@ const Socket = (() => {
       case 'incident_resolved':
         Store.resolveIncident(msg.data);
         break;
-      case 'device_updated': {
-        const devices = Store.get('devices');
-        const idx = devices.findIndex(d => d.id === msg.data.id);
-        if (idx >= 0) {
-          devices[idx] = { ...devices[idx], ...msg.data };
-          Store.set('devices', [...devices]);
-        }
+      case 'device_updated':
+        _mergeDevice(msg.data);
         break;
-      }
       case 'incident_updated':
         Store.emit('incident_updated', msg.data);
         break;
@@ -67,7 +92,12 @@ const Socket = (() => {
         ExtStatus.setStatus(msg.data.ok, msg.data.error);
         break;
       case 'devices_updated':
-        API.getDevices().then(devs => Store.set('devices', devs)).catch(() => {});
+        if (msg.data && msg.data.device) {
+          _mergeDevice(msg.data.device);
+        } else if (msg.data && Number(msg.data.created || 0) > 0) {
+          // New devices need one delayed list refresh. Pure updates do not.
+          _scheduleDevicesReload(5000);
+        }
         break;
     }
   }

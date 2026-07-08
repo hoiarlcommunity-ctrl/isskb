@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "port": "COM6",
+  "baudrate": 9600,
+  "stopbits": 2,
+  "timeout": 0.5,
+  "dtr": false,
+  "rts": true,
+  "reconnect_interval": 5,
+  "send_interval": 5,
+  "no_signal_timeout": 8,
+  "device_name": "ИМД-07",
+  "lat": 55.7558,
+  "lon": 37.6173,
+  "debug_raw": true,
+  "debug_crc": true,
+  "thresholds": {
+    "pult_dr": 0.5,
+    "pult_ed": 5.0,
+    "vbd_dr": 0.5,
+    "vbd_beta": 0.5,
+    "vbd_alpha": 0.03
+  }
+}

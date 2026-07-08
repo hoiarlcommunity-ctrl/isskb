@@ -8,6 +8,7 @@ GET  /api/external/status   — returns last heartbeat status.
 GET  /api/external/ping     — triggers immediate connectivity check.
 """
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ from websocket.manager import manager
 router = APIRouter(prefix="/api/external", tags=["external"])
 
 _CONFIG_FILE = Path(__file__).parent.parent / "config" / "settings.json"
+_EXTERNAL_TOKEN = os.getenv("SENTINEL_EXTERNAL_TOKEN", "").strip()
 
 
 def _load_active_field_map() -> dict | None:
@@ -54,6 +56,11 @@ async def receive_devices(
     Custom fields (e.g. battery_level, signal_strength, temperature) are also accepted
     and stored in device_states.extra_state / device_states columns.
     """
+    if _EXTERNAL_TOKEN:
+        received_token = request.headers.get("x-api-key", "").strip()
+        if received_token != _EXTERNAL_TOKEN:
+            raise HTTPException(401, {"error": "Неверный или отсутствующий X-API-Key"})
+
     raw = await request.body()
     content_type = request.headers.get("content-type", "НЕ УКАЗАН")
     print(f"[EXT] POST /devices | content-type={content_type} | len={len(raw)}")

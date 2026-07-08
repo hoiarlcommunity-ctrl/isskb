@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import json
+import os
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -44,6 +45,7 @@ from services.simulator import simulation_loop
 from services.db_watcher import db_watcher_loop
 from services.poller import poller_loop
 from services.skyhunter_poller import skyhunter_loop
+from services.imd_reader import imd_loop
 import services.syslog as syslog
 from auth.db import create_auth_pool, close_auth_pool
 from auth.migrations import run_auth_migrations
@@ -53,7 +55,9 @@ from auth.config import COOKIE_NAME
 
 # ── Пути, не требующие авторизации ───────────────────────────────────────────
 _OPEN_PREFIXES = ("/auth/", "/static/", "/tiles/", "/login")
-_OPEN_EXACT    = {"/ws"}
+# Внешний приём данных должен проходить без браузерной cookie-сессии.
+# Защита вынесена в api/external.py через X-API-Key/SENTINEL_EXTERNAL_TOKEN.
+_OPEN_EXACT    = {"/ws", "/api/external/devices"}
 
 
 _LOG_SKIP = {"/ws", "/auth/me", "/api/admin/logs", "/api/admin/metrics"}
@@ -131,6 +135,7 @@ async def lifespan(app: FastAPI):
     watcher_task = asyncio.create_task(db_watcher_loop())
     poll_task    = asyncio.create_task(poller_loop())
     sh_task      = asyncio.create_task(skyhunter_loop())
+    imd_task     = asyncio.create_task(imd_loop())
     yield
 
     hb_task.cancel()
@@ -138,6 +143,7 @@ async def lifespan(app: FastAPI):
     watcher_task.cancel()
     poll_task.cancel()
     sh_task.cancel()
+    imd_task.cancel()
     await close_pool()
     await close_auth_pool()
 

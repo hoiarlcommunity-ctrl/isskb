@@ -33,6 +33,51 @@ const DevicePanel = (() => {
     iconInput:    document.getElementById('dd-icon-upload'),
   };
 
+  // Cache last non-empty extra_state for each device. Some periodic state/list
+  // updates arrive without extra_state and should not clear IMD readings in
+  // the details panel.
+  const _extraCache = new Map();
+  let _metricsPanelDeviceId = null;
+
+  const IMD_EXTRA_KEYS = [
+    'dose_rate', 'error_percent', 'accumulated_dose', 'vbd_data',
+    'imd_power', 'imd_mode', 'imd_time', 'imd_ext_type',
+    'imd_alarm_pult_dr', 'imd_alarm_pult_ed', 'imd_alarm_vbd', 'imd_last_error',
+    'imd_packet_len', 'imd_packet_type', 'imd_crc', 'imd_status_byte', 'imd_error_byte',
+    'imd_low_battery', 'imd_external_power', 'imd_pult_dr_base', 'imd_pult_ed_base',
+    'imd_vbd_base', 'imd_raw_packet',
+  ];
+
+  function _rememberExtra(devOrId, extraMaybe) {
+    const id = typeof devOrId === 'object' ? devOrId?.id : devOrId;
+    const dev = typeof devOrId === 'object' ? devOrId : null;
+
+    // Полные данные ИМД иногда приходят не только в extra_state, а также
+    // отдельными верхнеуровневыми полями. Сохраняем оба варианта, чтобы
+    // очередной частичный пакет не очищал ПОКАЗАТЕЛИ.
+    const incoming = {
+      ..._coerceExtra(dev ? dev.extra_state : extraMaybe),
+      ..._extractTopLevelImd(dev),
+    };
+    const prev = _extraCache.get(Number(id)) || {};
+    const merged = Object.keys(incoming).length ? { ...prev, ...incoming } : prev;
+    if (id != null && Object.keys(merged).length) _extraCache.set(Number(id), merged);
+    return merged;
+  }
+
+  function _extractTopLevelImd(dev) {
+    if (!dev || typeof dev !== 'object') return {};
+    const out = {};
+    IMD_EXTRA_KEYS.forEach(k => {
+      if (dev[k] !== null && dev[k] !== undefined && String(dev[k]) !== '') out[k] = dev[k];
+    });
+    return out;
+  }
+
+  function _extraForDevice(dev) {
+    return _rememberExtra(dev);
+  }
+
   function init() {
     document.getElementById('dd-close').addEventListener('click', () => {
       Store.set('selectedDeviceId', null);
@@ -95,54 +140,71 @@ const DevicePanel = (() => {
 
     Store.on('selectedDeviceId', async (id) => {
       if (!id) { _showEmpty(); return; }
-      const dev = Store.get('devices').find(d => d.id === id);
+      const dev = Store.get('devices').find(d => Number(d.id) === Number(id));
       if (!dev) { _showEmpty(); return; }
-      _renderDevice(dev);
+      _renderDevice(dev, true);
       try {
         const full = await API.getDevice(id);
-        if (Store.get('selectedDeviceId') === id) {
-          _renderMetrics(full.metrics || {}, full.extra_state);
+        if (Number(Store.get('selectedDeviceId')) === Number(id)) {
+          const extra = _rememberExtra(id, full.extra_state || dev.extra_state);
+          _renderDevice({ ...dev, ...full, extra_state: extra }, false);
+          _renderMetrics(full.metrics || {}, extra);
         }
       } catch(e) { /* silent */ }
     });
 
     Store.on('metrics_update', (batch) => {
       const selId = Store.get('selectedDeviceId');
-      if (!selId) return;
-      const entry = batch.find(b => b.device_id === selId);
-      if (!entry) return;
+      if (!selId || !Array.isArray(batch)) return;
+      const entry = batch.find(b => Number(b.device_id) === Number(selId));
+      if (!entry || !Array.isArray(entry.metrics)) return;
+
+      // Обновляем значения в уже открытой карточке без полной перерисовки.
+      // Если строк ещё нет, создаём их через _renderMetrics(), но без очистки
+      // существующего содержимого панели.
+      const metricObj = {};
       entry.metrics.forEach(m => {
-        const row = document.querySelector(`.metric-row[data-key="${m.key}"]`);
-        if (row) {
-          const valEl = row.querySelector('.m-val');
-          if (valEl) {
-            valEl.textContent = _fmtValue(m.value, m.key);
-            valEl.classList.add('anim-fade-in');
-            setTimeout(() => valEl.classList.remove('anim-fade-in'), 300);
-          }
-        }
+        metricObj[m.key] = [{
+          value: m.raw || m.value,
+          unit: m.raw ? '' : (m.unit || ''),
+        }];
       });
+      const dev = Store.get('devices').find(d => Number(d.id) === Number(selId));
+      _renderMetrics(metricObj, _extraForDevice(dev));
     });
 
+    Store.on('device_upserted', (dev) => {
+      const id = Store.get('selectedDeviceId');
+      if (!id || !dev || Number(dev.id) !== Number(id)) return;
+      _renderDevice(dev, false);
+      _renderMetrics({}, _extraForDevice(dev));
+    });
+
+    // Fallback для полной перезагрузки списка устройств от старых источников.
     Store.on('change', ({ key }) => {
       if (key !== 'devices') return;
       const id = Store.get('selectedDeviceId');
       if (!id) return;
-      const dev = Store.get('devices').find(d => d.id === id);
-      if (dev) _renderLiveState(dev);
+      const dev = Store.get('devices').find(d => Number(d.id) === Number(id));
+      if (!dev) return;
+      _renderDevice(dev, false);
+      _renderMetrics({}, _extraForDevice(dev));
     });
   }
 
   function _showEmpty() {
+    _metricsPanelDeviceId = null;
     detailPanel.classList.add('hidden');
     noSelection.classList.remove('hidden');
   }
 
-  function _renderDevice(dev) {
+  function _renderDevice(dev, animate = true) {
     noSelection.classList.add('hidden');
     detailPanel.classList.remove('hidden');
-    detailPanel.classList.add('anim-slide-in');
-    setTimeout(() => detailPanel.classList.remove('anim-slide-in'), 250);
+    if (animate) {
+      detailPanel.classList.add('anim-slide-in');
+      setTimeout(() => detailPanel.classList.remove('anim-slide-in'), 250);
+    }
 
     // Icon: use uploaded icon_path if available, otherwise emoji
     if (dev.icon_path) {
@@ -187,6 +249,10 @@ const DevicePanel = (() => {
     }
 
     _renderLiveState(dev);
+    // Показываем extra_state сразу из списка устройств. Если очередной
+    // частичный update пришёл без extra_state, берём последнее известное
+    // значение из кэша, чтобы ПОКАЗАТЕЛИ не исчезали.
+    _renderMetrics({}, _extraForDevice(dev));
   }
 
   function _renderLiveState(dev) {
@@ -221,8 +287,8 @@ const DevicePanel = (() => {
 
     // Last seen
     if (dev.last_heartbeat) {
-      const d = new Date(dev.last_heartbeat + (dev.last_heartbeat.endsWith('Z') ? '' : 'Z'));
-      refs.lastSeen.textContent = _relTime(d);
+      const d = _parseDate(dev.last_heartbeat);
+      refs.lastSeen.textContent = d ? _relTime(d) : '—';
     } else {
       refs.lastSeen.textContent = '—';
     }
@@ -235,7 +301,26 @@ const DevicePanel = (() => {
     }
   }
 
+  function _coerceExtra(extraState) {
+    if (!extraState) return {};
+    if (typeof extraState === 'string') {
+      try { return JSON.parse(extraState); } catch { return {}; }
+    }
+    if (typeof extraState === 'object' && !Array.isArray(extraState)) return extraState;
+    return {};
+  }
+
+  function _parseDate(value) {
+    if (!value) return null;
+    const s = String(value);
+    const hasTZ = /([zZ]|[+-]\d{2}:?\d{2})$/.test(s);
+    const d = new Date(hasTZ ? s : `${s}Z`);
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+
   function _renderMetrics(metricsObj, extraState) {
+    extraState = _coerceExtra(extraState);
+    metricsObj = metricsObj || {};
     const LABELS = {
       fps: 'Частота кадров', bitrate: 'Битрейт', temperature: 'Температура',
       sensitivity: 'Чувствительность', battery_voltage: 'Напряжение батареи',
@@ -245,49 +330,159 @@ const DevicePanel = (() => {
       beam_status: 'Луч', alignement: 'Юстировка',
       channels_active: 'Активных каналов', cpu_load: 'Нагрузка CPU',
       storage_used: 'Занято хранилище',
+
+      // ИМД-07: поля приходят из services/imd_reader.py → extra_state JSONB
+      dose_rate: 'Мощность дозы',
+      error_percent: 'Погрешность',
+      accumulated_dose: 'Накопленная доза',
+      vbd_data: 'ВБД',
+      imd_mode: 'Режим ИМД',
+      imd_time: 'Время ИМД',
+      imd_power: 'Питание ИМД',
+      imd_ext_type: 'Тип ВБД',
+      imd_alarm_pult_dr: 'Порог МД пульта',
+      imd_alarm_pult_ed: 'Порог НД пульта',
+      imd_alarm_vbd: 'Порог ВБД',
+      imd_last_error: 'Ошибка ИМД',
+      imd_packet_len: 'Длина пакета',
+      imd_packet_type: 'Тип пакета',
+      imd_crc: 'CRC',
+      imd_status_byte: 'Статус-байт',
+      imd_error_byte: 'Байт ошибки',
+      imd_low_battery: 'Разряд батареи',
+      imd_external_power: 'Внешнее питание',
+      imd_pult_dr_base: 'МД пульта, базовое',
+      imd_pult_ed_base: 'НД пульта, базовое',
+      imd_vbd_base: 'ВБД, базовое',
+      imd_raw_packet: 'Raw-пакет',
     };
 
-    refs.metrics.innerHTML = '';
+    const EXTRA_ORDER = [
+      'dose_rate', 'error_percent', 'accumulated_dose', 'vbd_data',
+      'imd_power', 'imd_mode', 'imd_time', 'imd_ext_type',
+      'imd_alarm_pult_dr', 'imd_alarm_pult_ed', 'imd_alarm_vbd', 'imd_last_error',
+      'imd_packet_type', 'imd_packet_len', 'imd_crc', 'imd_status_byte', 'imd_error_byte',
+      'imd_low_battery', 'imd_external_power', 'imd_pult_dr_base', 'imd_pult_ed_base',
+      'imd_vbd_base', 'imd_raw_packet',
+    ];
+
+    const selectedId = Number(Store.get('selectedDeviceId'));
+    if (_metricsPanelDeviceId !== selectedId) {
+      // Очищаем блок только при выборе другого устройства. На телеметрии
+      // этого же устройства строки обновляются точечно, поэтому карточка не
+      // мигает и не показывает «Нет данных» на долю секунды.
+      refs.metrics.innerHTML = '';
+      _metricsPanelDeviceId = selectedId;
+    }
+
+    const rows = [];
 
     // Standard time-series metrics
     Object.entries(metricsObj).forEach(([key, arr]) => {
       if (!arr || !arr.length) return;
       const latest = arr[0];
-      const row = document.createElement('div');
-      row.className = 'metric-row';
-      row.dataset.key = key;
-      row.innerHTML = `
-        <span class="m-key">${LABELS[key] || key}</span>
-        <span><span class="m-val">${_fmtValue(latest.value, key)}</span><span class="m-unit"> ${latest.unit || ''}</span></span>
-      `;
-      refs.metrics.appendChild(row);
+      const rawValue = latest.raw || latest.value;
+      rows.push({
+        domKey: `metric_${key}`,
+        altKeys: [key, `es_${key}`],
+        label: LABELS[key] || key,
+        value: _fmtValue(rawValue, key),
+        unit: latest.unit || '',
+        kind: 'metric',
+      });
     });
 
-    // Extra state JSONB fields (from external API sync)
+    // Extra state JSONB fields (from external API / встроенного IMD sync).
     if (extraState && typeof extraState === 'object' && !Array.isArray(extraState)) {
-      Object.entries(extraState).forEach(([key, val]) => {
-        const row = document.createElement('div');
-        row.className = 'metric-row';
-        row.dataset.key = `es_${key}`;
-        const displayVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
-        row.innerHTML = `
-          <span class="m-key" style="color:var(--txt-secondary)">${LABELS[key] || key}</span>
-          <span class="m-val" style="font-size:11px;font-family:monospace">${displayVal}</span>
-        `;
-        refs.metrics.appendChild(row);
-      });
+      Object.entries(extraState)
+        .filter(([, val]) => val !== null && val !== undefined && String(val) !== '')
+        .sort(([a], [b]) => {
+          const ia = EXTRA_ORDER.indexOf(a);
+          const ib = EXTRA_ORDER.indexOf(b);
+          if (ia >= 0 || ib >= 0) return (ia >= 0 ? ia : 999) - (ib >= 0 ? ib : 999);
+          return a.localeCompare(b);
+        })
+        .forEach(([key, val]) => {
+          const displayVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
+          rows.push({
+            domKey: `es_${key}`,
+            altKeys: [`metric_${key}`, key],
+            label: LABELS[key] || key,
+            value: displayVal,
+            unit: '',
+            kind: 'extra',
+          });
+        });
     }
 
-    if (!refs.metrics.children.length) {
-      refs.metrics.innerHTML = '<div style="color:var(--txt-muted);font-size:11px;padding:4px 0">Нет данных</div>';
+    if (!rows.length) {
+      // Не затираем существующие строки пустым частичным обновлением.
+      if (refs.metrics.querySelector('.metric-row')) return;
+      if (!refs.metrics.querySelector('[data-empty-metrics="1"]')) {
+        refs.metrics.innerHTML = '<div data-empty-metrics="1" style="color:var(--txt-muted);font-size:11px;padding:4px 0">Нет данных</div>';
+      }
+      return;
     }
+
+    refs.metrics.querySelectorAll('[data-empty-metrics="1"]').forEach(el => el.remove());
+
+    // Если одно и то же значение пришло и как metric, и как extra_state,
+    // показываем extra_state-строку как основную, а numeric metric используем
+    // только для старых устройств без extra_state.
+    const seen = new Set();
+    const ordered = rows.filter(r => {
+      const canonical = r.domKey.replace(/^metric_/, '').replace(/^es_/, '');
+      const isExtraPreferred = rows.some(x => x.domKey === `es_${canonical}`);
+      if (r.kind === 'metric' && isExtraPreferred) return false;
+      if (seen.has(r.domKey)) return false;
+      seen.add(r.domKey);
+      return true;
+    });
+
+    ordered.forEach(r => _upsertMetricRow(r));
+  }
+
+  function _findMetricRow(keys) {
+    const all = Array.from(refs.metrics.querySelectorAll('.metric-row'));
+    return all.find(row => keys.includes(row.dataset.key));
+  }
+
+  function _upsertMetricRow(rowData) {
+    const keys = [rowData.domKey, ...(rowData.altKeys || [])];
+    let row = _findMetricRow(keys);
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'metric-row';
+      row.dataset.key = rowData.domKey;
+      row.innerHTML = `
+        <span class="m-key"></span>
+        <span><span class="m-val"></span><span class="m-unit"></span></span>
+      `;
+      refs.metrics.appendChild(row);
+    }
+
+    row.dataset.key = rowData.domKey;
+    const keyEl = row.querySelector('.m-key');
+    const valEl = row.querySelector('.m-val');
+    const unitEl = row.querySelector('.m-unit');
+
+    if (keyEl && keyEl.textContent !== rowData.label) keyEl.textContent = rowData.label;
+    if (valEl && valEl.textContent !== String(rowData.value)) {
+      valEl.textContent = rowData.value;
+      valEl.classList.add('anim-fade-in');
+      setTimeout(() => valEl.classList.remove('anim-fade-in'), 300);
+    }
+    if (unitEl) unitEl.textContent = rowData.unit ? ` ${rowData.unit}` : '';
   }
 
   function _fmtValue(v, key) {
     if (v == null) return '—';
     if (key === 'beam_status') return v >= 1 ? 'OK' : 'РАЗРЫВ';
-    if (Number.isInteger(v)) return v;
-    return parseFloat(parseFloat(v).toFixed(2));
+    if (typeof v === 'string' && /[^0-9.,+\-\s]/.test(v)) return v;
+    const num = Number(String(v).replace(',', '.'));
+    if (!Number.isFinite(num)) return String(v);
+    if (Number.isInteger(num)) return num;
+    return parseFloat(num.toFixed(3));
   }
 
   function _modeLabel(mode) {

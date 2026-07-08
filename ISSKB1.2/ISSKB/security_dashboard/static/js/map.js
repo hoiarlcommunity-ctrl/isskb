@@ -330,6 +330,11 @@ const MapWidget = (() => {
       _updateLabelVisibility();
     });
 
+    Store.on('device_upserted', dev => {
+      _upsertSingleDevice(dev);
+      _updateLayerCounts();
+    });
+
     Store.on('change', ({ key }) => {
       if (key === 'devices') {
         Store.get('devices').forEach(d => _updateMarkerStyle(d));
@@ -344,8 +349,16 @@ const MapWidget = (() => {
 
     // Highlight selected device ranges
     Store.on('selectedDeviceId', id => {
-      if (_prevSelectedId != null) _restoreRanges(_prevSelectedId);
-      if (id != null)              _highlightRanges(id);
+      if (_prevSelectedId != null) {
+        _restoreRanges(_prevSelectedId);
+        const prevDev = Store.get('devices').find(d => Number(d.id) === Number(_prevSelectedId));
+        if (prevDev) _updateMarkerStyle(prevDev);
+      }
+      if (id != null) {
+        _highlightRanges(id);
+        const dev = Store.get('devices').find(d => Number(d.id) === Number(id));
+        if (dev) _updateMarkerStyle(dev);
+      }
       _prevSelectedId = id;
     });
   }
@@ -364,6 +377,38 @@ const MapWidget = (() => {
   }
 
   // ── Markers ──────────────────────────────────────────────────────────────
+  function _upsertSingleDevice(dev) {
+    if (!dev || dev.id == null) return;
+    const activeTab = TabSystem.getActive();
+
+    // Если координат нет — убираем только этот маркер, не трогая остальные.
+    if (dev.latitude == null || dev.longitude == null) {
+      if (markerRefs[dev.id]) {
+        markersLayer.removeLayer(markerRefs[dev.id]);
+        delete markerRefs[dev.id];
+      }
+      _setRangesVisible(dev.id, false);
+      return;
+    }
+
+    if (markerRefs[dev.id]) {
+      markerRefs[dev.id].setLatLng([dev.latitude, dev.longitude]);
+      markerRefs[dev.id].setPopupContent(_popupHtml(dev));
+      _updateMarkerStyle(dev);
+    } else {
+      _createMarker(dev);
+      _renderDeviceRanges(dev);
+    }
+
+    if (activeTab) {
+      const show = activeTab.categories.length > 0 && activeTab.categories.includes(dev.category_code);
+      const el = markerRefs[dev.id]?.getElement?.();
+      if (el) el.style.display = show ? '' : 'none';
+      _setRangesVisible(dev.id, show);
+    }
+    setTimeout(_updateLabelVisibility, 0);
+  }
+
   function renderDevices(devices) {
     const existingIds = new Set(Object.keys(markerRefs));
     const incomingIds = new Set();
@@ -422,15 +467,53 @@ const MapWidget = (() => {
 
     marker.bindPopup(_popupHtml(dev), { className: 'sentinel-popup', maxWidth: 220 });
     marker.on('click', () => Store.set('selectedDeviceId', dev.id));
+    marker._isskbIconSig = _iconSignature(dev);
+    marker._isskbRangeSig = _rangesSignature(dev);
     markerRefs[dev.id] = marker;
+  }
+
+  function _iconSignature(dev) {
+    return [
+      dev.online_status ? 1 : 0,
+      dev.operational_mode || '',
+      dev.category_icon || '',
+      dev.icon_path || '',
+      Number(Store.get('selectedDeviceId')) === Number(dev.id) ? 1 : 0,
+    ].join('|');
+  }
+
+  function _rangesSignature(dev) {
+    return JSON.stringify({
+      online: !!dev.online_status,
+      mode: dev.operational_mode || '',
+      lat: dev.latitude,
+      lon: dev.longitude,
+      ranges: dev.detection_ranges || [],
+    });
   }
 
   function _updateMarkerStyle(dev) {
     const m = markerRefs[dev.id];
-    if (m) { m.setIcon(_makeIcon(dev)); m.setZIndexOffset(_zIndex(dev)); }
-    _renderDeviceRanges(dev);
+    if (!m) return;
+
+    const nextIconSig = _iconSignature(dev);
+    if (m._isskbIconSig !== nextIconSig) {
+      // Leaflet setIcon recreates DOM and causes visible blinking. Do it only
+      // when status/icon/selection actually changed, not on every IMD value.
+      m.setIcon(_makeIcon(dev));
+      m._isskbIconSig = nextIconSig;
+    }
+    m.setZIndexOffset(_zIndex(dev));
+
+    const nextRangeSig = _rangesSignature(dev);
+    if (m._isskbRangeSig !== nextRangeSig) {
+      // Rebuilding circles every 5 seconds also looks like disappearing layers.
+      _renderDeviceRanges(dev);
+      m._isskbRangeSig = nextRangeSig;
+    }
+
     // Restore highlight if this device is still selected
-    if (Store.get('selectedDeviceId') === dev.id) _highlightRanges(dev.id);
+    if (Number(Store.get('selectedDeviceId')) === Number(dev.id)) _highlightRanges(dev.id);
   }
 
   // ── Detection range circles ──────────────────────────────────────────────

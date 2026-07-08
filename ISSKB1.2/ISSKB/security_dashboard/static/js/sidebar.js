@@ -28,6 +28,7 @@ const Sidebar = (() => {
     });
 
     Store.on('devices', _render);
+    Store.on('device_upserted', _updateOneItem);
     Store.on('selectedDeviceId', _highlightSelected);
     Store.on('tabChanged', () => _render());
   }
@@ -127,6 +128,59 @@ const Sidebar = (() => {
       wrap.appendChild(itemsEl);
       listEl.appendChild(wrap);
     });
+  }
+
+
+  function _updateOneItem(dev) {
+    if (!dev || dev.id == null) return;
+    const tab = TabSystem.getActive();
+    const cats = tab ? tab.categories : [];
+    const shouldBeVisible = cats.length > 0 && cats.includes(dev.category_code);
+    const current = listEl.querySelector(`.device-item[data-id="${dev.id}"]`);
+
+    // Если устройство появилось впервые или поменяло группу/фильтр — один раз
+    // пересобираем список. В обычном потоке ИМД существующая строка обновляется
+    // точечно и больше не мигает весь список.
+    if (!current || !shouldBeVisible) {
+      _render();
+      return;
+    }
+
+    const selected = Number(Store.get('selectedDeviceId')) === Number(dev.id);
+    _patchItem(current, dev, selected);
+    _highlightSelected(Store.get('selectedDeviceId'));
+  }
+
+  function _patchItem(el, dev, selected) {
+    if (!el) return;
+    el.className = 'device-item' +
+      (selected ? ' selected' : '') +
+      (dev.operational_mode === 'alarm' ? ' alarm-item' : '');
+
+    const dot = el.querySelector('.di-status-dot');
+    if (dot) dot.className = `di-status-dot ${_dotClass(dev)} ${_dotGlowClass(dev)}`;
+
+    const icon = el.querySelector('.di-icon');
+    if (icon) icon.textContent = dev.category_icon || '📡';
+
+    const name = el.querySelector('.di-name');
+    if (name) name.textContent = dev.name;
+
+    const sub = el.querySelector('.di-sub');
+    if (sub) sub.textContent = `${_modeLabel(dev)}${dev.serial_number ? ' · ' + dev.serial_number : ''}`;
+
+    const batText = dev.battery_level != null ? `🔋${dev.battery_level}%` : '';
+    let bat = el.querySelector('.di-bat');
+    if (batText) {
+      if (!bat) {
+        bat = document.createElement('span');
+        bat.className = 'di-bat';
+        el.appendChild(bat);
+      }
+      bat.textContent = batText;
+    } else if (bat) {
+      bat.remove();
+    }
   }
 
   function _toggleGroup(groupName, wrapEl) {
