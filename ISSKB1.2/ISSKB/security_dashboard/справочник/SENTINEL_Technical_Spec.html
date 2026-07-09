@@ -318,7 +318,7 @@
   <div class="cover-meta">
     <div class="cover-meta-item"><label>Дата</label><span>Июнь 2026</span></div>
     <div class="cover-meta-item"><label>Статус</label><span>Опытная эксплуатация</span></div>
-    <div class="cover-meta-item"><label>Платформа</label><span>Windows 11 / Docker</span></div>
+    <div class="cover-meta-item"><label>Платформа</label><span>Windows 11 / PostgreSQL</span></div>
     <div class="cover-meta-item"><label>Версия БД</label><span>PostgreSQL 16</span></div>
     <div class="cover-meta-item"><label>Версия ПО</label><span>Python 3.13 / FastAPI</span></div>
   </div>
@@ -404,7 +404,7 @@
         <li>RAM: 4 ГБ</li>
         <li>Диск: 10 ГБ (без карт) / 30+ ГБ (с картами)</li>
         <li>Python 3.11+</li>
-        <li>Docker Desktop (для PostgreSQL)</li>
+        <li>Портативный PostgreSQL 16</li>
       </ul>
     </div>
     <div class="req-card">
@@ -432,7 +432,7 @@
         <li>FastAPI, Uvicorn</li>
         <li>asyncpg, python-multipart</li>
         <li>websockets</li>
-        <li>PostgreSQL 16 (Docker)</li>
+        <li>PostgreSQL 16 (портативный)</li>
         <li>Leaflet.js 1.9 (клиент)</li>
       </ul>
     </div>
@@ -463,8 +463,8 @@
     <div class="stack-item">
       <div class="stack-badge">БД</div>
       <div>
-        <div class="s-name">PostgreSQL 16 (Docker)</div>
-        <div class="s-role">Реляционная СУБД. Поддержка JSONB-полей для гибких метрик. Запущена в изолированном Docker-контейнере.</div>
+        <div class="s-name">PostgreSQL 16 (портативный)</div>
+        <div class="s-role">Реляционная СУБД. Поддержка JSONB-полей для гибких метрик. Запускается локально вместе с приложением.</div>
       </div>
     </div>
     <div class="stack-item">
@@ -491,8 +491,8 @@
     <div class="stack-item">
       <div class="stack-badge">INFRA</div>
       <div>
-        <div class="s-name">Docker Desktop</div>
-        <div class="s-role">Контейнеризация PostgreSQL. Изоляция СУБД от хостовой ОС, простой запуск и резервное копирование.</div>
+        <div class="s-name">Портативный PostgreSQL</div>
+        <div class="s-role">Локальный PostgreSQL. Автоматический запуск, хранение данных в pgdata и резервное копирование через pg_dump.</div>
       </div>
     </div>
     <div class="stack-item">
@@ -520,7 +520,7 @@
     <div class="flow-arrow">→</div>
     <div class="flow-box">asyncpg<br><small style="color:#64748b">pool соединений</small></div>
     <div class="flow-arrow">→</div>
-    <div class="flow-box">PostgreSQL<br><small style="color:#64748b">Docker</small></div>
+    <div class="flow-box">PostgreSQL<br><small style="color:#64748b">local</small></div>
   </div>
   <div class="flow" style="margin-top:-10px">
     <div class="flow-box">Браузер<br><small style="color:#64748b">HTML + JS</small></div>

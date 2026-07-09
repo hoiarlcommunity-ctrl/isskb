@@ -123,7 +123,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Портативный PostgreSQL поднимается вместе с приложением (без Docker).
+    # Портативный PostgreSQL поднимается вместе с приложением (локально).
     # Запуск блокирующий, поэтому уводим в поток, чтобы не держать event loop.
     await asyncio.to_thread(embedded_pg.start)
 

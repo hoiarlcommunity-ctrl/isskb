@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 # ISSKB setup for Python 3.14.
 # Run from ISSKB1.2\ISSKB\security_dashboard:
 #   powershell -ExecutionPolicy Bypass -File .\setup_py314.ps1
@@ -73,4 +73,4 @@ if ($LASTEXITCODE -ne 0) { throw "Import check failed" }
 
 Write-Host "" 
 Write-Host "[OK] Python 3.14 environment is ready." -ForegroundColor Green
-Write-Host "Run: .\run_py314.bat" -ForegroundColor Green
+Write-Host "Run: .\run_py314.ps1" -ForegroundColor Green

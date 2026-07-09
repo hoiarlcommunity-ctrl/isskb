@@ -1,5 +1,5 @@
 ﻿#Requires -Version 5.1
-# SENTINEL ISSKB — запуск на нативном PostgreSQL (без Docker)
+# SENTINEL ISSKB — запуск с внешним PostgreSQL
 
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -8,6 +8,7 @@ $Host.UI.RawUI.WindowTitle = "SENTINEL ISSKB — Запуск"
 
 $APP_DIR  = Join-Path $PSScriptRoot "security_dashboard"
 $DATABASE = "sentinel_isskb"
+$AUTH_DB  = "sentinel_auth"
 $PORT     = 8001
 $PG_USER  = "sentinel_user"
 $PG_PASS  = "sentinel123"
@@ -39,6 +40,26 @@ function FAIL($text) {
 }
 function Divider { Write-Host ("  " + ("─" * 52)) -ForegroundColor DarkGray }
 
+function Get-WorkingPython {
+    $candidates = @(
+        @{ Exe = "py";     Args = @("-3.12") },
+        @{ Exe = "py";     Args = @("-3.13") },
+        @{ Exe = "py";     Args = @("-3.11") },
+        @{ Exe = "py";     Args = @("-3") },
+        @{ Exe = "python"; Args = @() }
+    )
+    foreach ($c in $candidates) {
+        $exe = $c.Exe; $candArgs = $c.Args
+        try {
+            $v = & $exe @candArgs --version 2>&1
+            if ($LASTEXITCODE -eq 0 -and "$v" -match "Python 3") {
+                return @{ Exe = $exe; Args = $candArgs; Version = "$v" }
+            }
+        } catch { }
+    }
+    return $null
+}
+
 Clear-Host
 Write-Host ""
 Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -49,10 +70,9 @@ Write-Host ""
 
 # ── ШАГ 1: PostgreSQL ────────────────────────────────────────────────────────
 
-Hdr "1/3  PostgreSQL (нативный)"
+Hdr "1/3  PostgreSQL (внешний)"
 Divider
 
-# Ищем psql в стандартных путях
 $pgPaths = @(
     "C:\Program Files\PostgreSQL\17\bin\psql.exe",
     "C:\Program Files\PostgreSQL\16\bin\psql.exe",
@@ -70,11 +90,17 @@ if (-not $psqlExe) {
 OK "psql найден: $psqlExe"
 
 $env:PGPASSWORD = $PG_PASS
-$pgTest = & $psqlExe -h $PG_HOST -p $PG_PORT -U $PG_USER -d $DATABASE -c "SELECT 1;" 2>&1
-if ($LASTEXITCODE -ne 0) {
-    FAIL "Не удалось подключиться к БД $DATABASE. Убедитесь, что PostgreSQL запущен и БД создана."
+foreach ($db in @($DATABASE, $AUTH_DB)) {
+    $dbTest = & $psqlExe -h $PG_HOST -p $PG_PORT -U $PG_USER -d $db -tAc "SELECT 1;" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        INFO "База $db не найдена — пробую создать..."
+        & $psqlExe -h $PG_HOST -p $PG_PORT -U $PG_USER -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $db OWNER $PG_USER;" | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            FAIL "Не удалось подключиться или создать БД $db. Проверьте PostgreSQL, пользователя $PG_USER и пароль."
+        }
+    }
+    OK "База данных $db доступна"
 }
-OK "PostgreSQL и база $DATABASE доступны"
 Write-Host ""
 
 # ── ШАГ 2: Python-зависимости ────────────────────────────────────────────────
@@ -82,32 +108,26 @@ Write-Host ""
 Hdr "2/3  Python и зависимости"
 Divider
 
-# Определяем РАБОЧИЙ интерпретатор Python (голый "python" здесь — заглушка
-# Microsoft Store, молча ничего не запускает). Предпочитаем py -3.13.
-$pyCandidates = @(
-    @{ Exe = "py";     Args = @("-3.13") },
-    @{ Exe = "py";     Args = @("-3") },
-    @{ Exe = "python"; Args = @() }
-)
-$PyExe = $null; $PyArgs = @()
-foreach ($c in $pyCandidates) {
-    $exe = $c.Exe; $a = $c.Args
-    try {
-        $v = & $exe @a --version 2>&1
-        if ($LASTEXITCODE -eq 0 -and "$v" -match "Python 3") { $PyExe = $exe; $PyArgs = $a; break }
-    } catch { }
-}
-if (-not $PyExe) { FAIL "Рабочий Python 3 не найден. Установите Python 3.11+ (с лаунчером py) с https://www.python.org/downloads/ и отключите заглушку Microsoft Store." }
-$pyVer = (& $PyExe @PyArgs --version 2>&1)
-OK "Python: $pyVer  (запуск: $PyExe $($PyArgs -join ' '))"
+$py = Get-WorkingPython
+if (-not $py) { FAIL "Рабочий Python 3 не найден. Установите Python 3.12+ с https://www.python.org/downloads/." }
+$PyExe = $py.Exe
+$PyArgs = $py.Args
+OK "Python: $($py.Version)  (запуск: $PyExe $($PyArgs -join ' '))"
 
-$depsOK = & $PyExe @PyArgs -c "import fastapi, uvicorn, asyncpg, multipart, psutil, bcrypt, jose, httpx; print('ok')" 2>&1
-if ($depsOK -notmatch "ok") {
-    INFO "Устанавливаю зависимости ОФЛАЙН из wheels\ (без интернета)..."
-    & $PyExe @PyArgs -m pip install --no-index --find-links (Join-Path $APP_DIR "wheels") `
-        -r (Join-Path $APP_DIR "requirements.txt") --quiet
-    if ($LASTEXITCODE -ne 0) { FAIL "Офлайн-установка не удалась. Проверьте папку security_dashboard\wheels\" }
-    OK "Зависимости установлены (офлайн, без обращения к интернету)"
+$pyMajorMinor = (& $PyExe @PyArgs -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor))" 2>&1).ToString().Trim()
+$depsCheck = & $PyExe @PyArgs -c "import fastapi, uvicorn, asyncpg, multipart, psutil, bcrypt, jose, httpx; print('ok')" 2>&1
+if ($LASTEXITCODE -ne 0 -or "$depsCheck" -notmatch "ok") {
+    if ($pyMajorMinor -eq "3.12" -and (Test-Path (Join-Path $APP_DIR "wheels"))) {
+        INFO "Устанавливаю зависимости ОФЛАЙН из wheels\ (Python 3.12)..."
+        & $PyExe @PyArgs -m pip install --no-index --find-links (Join-Path $APP_DIR "wheels") `
+            -r (Join-Path $APP_DIR "requirements.txt") --quiet
+    } else {
+        INFO "Для этой версии Python нужны свежие колёса — устанавливаю зависимости через pip..."
+        & $PyExe @PyArgs -m pip install --disable-pip-version-check --no-cache-dir `
+            -r (Join-Path $APP_DIR "requirements-py314.txt")
+    }
+    if ($LASTEXITCODE -ne 0) { FAIL "Установка зависимостей не удалась." }
+    OK "Зависимости установлены"
 } else {
     OK "Все зависимости установлены"
 }
@@ -127,6 +147,9 @@ Write-Host ""
 
 Set-Location $APP_DIR
 $env:PYTHONUTF8 = "1"
+$env:SENTINEL_PG_EMBEDDED = "0"
+$env:SENTINEL_DSN = "postgresql://$PG_USER`:$PG_PASS@$PG_HOST`:$PG_PORT/$DATABASE"
+$env:AUTH_DSN = "postgresql://$PG_USER`:$PG_PASS@$PG_HOST`:$PG_PORT/$AUTH_DB"
 & $PyExe @PyArgs main.py
 
 Write-Host ""

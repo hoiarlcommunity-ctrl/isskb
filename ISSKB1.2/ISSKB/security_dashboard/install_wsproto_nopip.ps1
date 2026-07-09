@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Site = Join-Path $Root ".venv314\Lib\site-packages"
 $Vendor = Join-Path $Root "vendor_wsproto"
@@ -22,4 +22,4 @@ foreach ($di in $distInfos) {
 $Py = Join-Path $Root ".venv314\Scripts\python.exe"
 & $Py -c "import wsproto; print('wsproto OK', getattr(wsproto, '__version__', 'unknown'))"
 Write-Host "[OK] wsproto установлен локально без pip и без интернета." -ForegroundColor Green
-Write-Host "Теперь остановите ISSKB через Ctrl+C и снова запустите .\run_py314.bat"
+Write-Host "Теперь остановите ISSKB через Ctrl+C и снова запустите .\run_py314.ps1"

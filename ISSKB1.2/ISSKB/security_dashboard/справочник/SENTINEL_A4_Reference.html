@@ -237,9 +237,9 @@
       <div class="stack-grid">
         <div class="s-item"><div class="s-tag">BACK</div><div><div class="s-name">Python 3.13 + FastAPI</div><div class="s-role">Асинхронный сервер приложения, REST API, автодокументация OpenAPI</div></div></div>
         <div class="s-item"><div class="s-tag">ASGI</div><div><div class="s-name">Uvicorn</div><div class="s-role">ASGI-сервер, HTTP + WebSocket одновременно, порт 8000</div></div></div>
-        <div class="s-item"><div class="s-tag">БД</div><div><div class="s-name">PostgreSQL 16</div><div class="s-role">СУБД в Docker-контейнере, порт 5432, поддержка JSONB</div></div></div>
+        <div class="s-item"><div class="s-tag">БД</div><div><div class="s-name">PostgreSQL 16</div><div class="s-role">Портативная СУБД, порт 5440, поддержка JSONB</div></div></div>
         <div class="s-item"><div class="s-tag">DRV</div><div><div class="s-name">asyncpg</div><div class="s-role">Нативный асинхронный драйвер PostgreSQL, пул 2–10 соединений</div></div></div>
-        <div class="s-item"><div class="s-tag">INFRA</div><div><div class="s-name">Docker Desktop</div><div class="s-role">Контейнеризация СУБД, изоляция от хостовой ОС Windows 11</div></div></div>
+        <div class="s-item"><div class="s-tag">INFRA</div><div><div class="s-name">Портативный PostgreSQL</div><div class="s-role">Локальный запуск СУБД вместе с приложением</div></div></div>
         <div class="s-item"><div class="s-tag">FRONT</div><div><div class="s-name">Vanilla JS (ES2022)</div><div class="s-role">Без фреймворков. Реактивный Store (pub/sub). SPA-архитектура.</div></div></div>
         <div class="s-item"><div class="s-tag">MAP</div><div><div class="s-name">Leaflet.js 1.9</div><div class="s-role">Интерактивная карта, маркеры, SVG-круги, оффлайн-тайлы</div></div></div>
         <div class="s-item"><div class="s-tag">TILES</div><div><div class="s-name">CartoDB / ESRI (offline)</div><div class="s-role">Тайлы закачаны локально, карта работает без интернета</div></div></div>
@@ -258,7 +258,7 @@
           <div class="f-arrow">→</div>
           <div class="f-box">asyncpg<small>pool</small></div>
           <div class="f-arrow">→</div>
-          <div class="f-box db">PostgreSQL<small>Docker</small></div>
+          <div class="f-box db">PostgreSQL<small>local</small></div>
         </div>
         <div style="font-size:7px;font-weight:700;color:#64748b;margin:5px 0 4px;">КЛИЕНТСКАЯ ЧАСТЬ (браузер)</div>
         <div class="flow-row">
@@ -679,7 +679,7 @@
           </div>
         </div>
         <div style="margin-top:5px;border-top:1px solid #e2e8f0;padding-top:5px;font-size:6.5px;color:#475569;">
-          <b>Требования (min):</b> Python 3.11+, Docker, 4 ГБ RAM, 30+ ГБ SSD<br>
+          <b>Требования (min):</b> Python 3.12+, PostgreSQL 16, 4 ГБ RAM, 30+ ГБ SSD<br>
           <b>Рек.:</b> 8 ГБ RAM, 4+ ядра, SSD, UPS<br>
           <b>Браузер:</b> Chrome/Edge/Firefox 100+, JS обязателен
         </div>

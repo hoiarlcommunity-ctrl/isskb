@@ -58,6 +58,6 @@ Write-Host ""
 Write-Host "  Готово. Другие ПК в этой же сети заходят по адресу:" -ForegroundColor Green
 Write-Host ("      http://{0}:{1}" -f $lanIp, $PORT) -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Убедитесь, что сервер запущен (ЗАПУСТИТЬ.bat)." -ForegroundColor DarkGray
+Write-Host "  Убедитесь, что сервер запущен (start.ps1)." -ForegroundColor DarkGray
 Write-Host "  Нажмите Enter для выхода..." -ForegroundColor DarkGray
 Read-Host | Out-Null

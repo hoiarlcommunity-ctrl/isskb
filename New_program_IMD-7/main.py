@@ -44,6 +44,7 @@ class IMD07_App:
             "server_url": "http://127.0.0.1:8001/api/external/devices", # УКАЖИ IP СЕРВЕРА SENTINEL
             "device_name": "ИМД-07 (Вход)", # Уникальное имя этого прибора
             "send_interval": 5,  # Отправлять данные каждые 5 секунд
+            "api_token": "",  # если на сервере задан SENTINEL_EXTERNAL_TOKEN — вписать сюда тот же токен
             "lat": 55.7558,  # <-- Широта (например, Москва)
             "lon": 37.6173   # <-- Долгота
         }
@@ -135,10 +136,16 @@ class IMD07_App:
         if not url:
             return
         try:
-            # УВЕЛИЧИЛИ ТАЙМАУТ ДО 10 СЕКУНД:
-            response = requests.post(url, json=[payload], timeout=10) 
+            headers = {}
+            api_token = str(self.thresholds.get("api_token", "")).strip()
+            if api_token:
+                headers["X-API-Key"] = api_token
+
+            response = requests.post(url, json=[payload], headers=headers, timeout=10)
             if response.status_code not in (200, 201):
                 self.log(f"Ошибка сервера: HTTP {response.status_code} | Ответ: {response.text}", "WARN")
+            else:
+                self.log(f"Данные отправлены в Sentinel: {response.status_code}", "NET")
         except Exception as e:
             self.log(f"Сетевая ошибка отправки: {e}", "ERROR")
 
@@ -146,11 +153,15 @@ class IMD07_App:
     def load_settings(self):
         try:
             if os.path.exists("settings.json"):
-                with open("settings.json", "r") as f: 
+                with open("settings.json", "r") as f:
                     data = json.load(f)
-                    if all(k in data for k in self.default_thresholds.keys()):
-                        return data
-        except: pass
+                    if isinstance(data, dict):
+                        # Не сбрасываем старые настройки, если в программе появились новые поля
+                        merged = self.default_thresholds.copy()
+                        merged.update(data)
+                        return merged
+        except Exception as e:
+            print(f"Ошибка чтения settings.json: {e}")
         return self.default_thresholds.copy()
 
     def save_settings(self, new_thresholds):
