@@ -1,2 +1,8 @@
 *.mbtiles
+.venv
+venv
 .venv314
+*.pyc
+.claude/
+*.log
+__pycache__/
