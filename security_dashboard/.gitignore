@@ -1,0 +1,8 @@
+# Портативный PostgreSQL — бинарники и данные кластера не коммитим
+pgsql/
+pgdata/
+*.pg.log
+
+# Python
+__pycache__/
+*.pyc

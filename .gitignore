@@ -1,11 +1,13 @@
 *.mbtiles
+venv
+.venv314
+*.pyc
+.claude/
+*.log
+__pycache__/
 # Стандартные виртуальные окружения
 venv/
-.venv/
-env/
-.env/
 ENV/
-virtualenv/
 
 # Окружения, созданные через virtualenvwrapper (обычно вне проекта, но на всякий случай)
 .virtualenvs/
