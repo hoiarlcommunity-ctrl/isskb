@@ -26,6 +26,7 @@ class UTF8JSONResponse(Response):
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
+from database import embedded_pg
 from database.connection import create_pool, close_pool
 from database.migrations import run_migrations
 from database.seed import run_seed
@@ -122,6 +123,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Портативный PostgreSQL поднимается вместе с приложением (без Docker).
+    # Запуск блокирующий, поэтому уводим в поток, чтобы не держать event loop.
+    await asyncio.to_thread(embedded_pg.start)
+
     # Auth БД — первой, чтобы не блокировать запуск при ошибке основной БД
     await run_auth_migrations()
     app.state.auth_pool = await create_auth_pool()
@@ -146,6 +151,7 @@ async def lifespan(app: FastAPI):
     imd_task.cancel()
     await close_pool()
     await close_auth_pool()
+    await asyncio.to_thread(embedded_pg.stop)
 
 
 app = FastAPI(

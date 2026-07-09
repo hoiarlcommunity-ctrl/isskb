@@ -1,6 +1,6 @@
 {
   "enabled": true,
-  "port": "COM6",
+  "port": "COM7",
   "baudrate": 9600,
   "stopbits": 2,
   "timeout": 0.5,

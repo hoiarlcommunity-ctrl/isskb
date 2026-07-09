@@ -9,8 +9,13 @@ echo.
 
 cd /d "%~dp0"
 
-:: Убеждаемся что sentinel-postgres запущен
-docker start sentinel-postgres > nul 2>&1
+:: PostgreSQL встроенный (портативный) — поднимается самим приложением из папки
+:: pgsql\. Если её нет — один раз выполните setup_postgres.ps1 (скачает бинарники).
+if not exist "pgsql\bin\pg_ctl.exe" (
+    echo [!] Портативный PostgreSQL не найден в pgsql\
+    echo [!] Запустите один раз: powershell -ExecutionPolicy Bypass -File setup_postgres.ps1
+    echo.
+)
 
 :: Определяем РАБОЧИЙ Python. Голый "python" на этом ПК — заглушка Microsoft
 :: Store (C:\Windows\System32\python): молча ничего не запускает. Предпочитаем
@@ -25,7 +30,7 @@ if not defined PYEXE (
     exit /b 1
 )
 
-echo [OK] База данных готова (sentinel_isskb)
+echo [..] PostgreSQL поднимется автоматически при старте
 echo [..] Запуск сервера на порту 8001...
 echo.
 

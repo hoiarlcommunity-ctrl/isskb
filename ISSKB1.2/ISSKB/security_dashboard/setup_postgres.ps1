@@ -1,0 +1,50 @@
+# ============================================================================
+#  Portable PostgreSQL installer for Sentinel ISSKB (no Docker).
+#
+#  Downloads the official Windows PostgreSQL binaries (EDB zip, no installer)
+#  and unpacks them into the pgsql\ folder next to the app. Run ONCE.
+#  After that the DB server starts automatically together with main.py.
+#
+#  Usage:  powershell -ExecutionPolicy Bypass -File setup_postgres.ps1
+#  (ASCII-only on purpose: Windows PowerShell 5.1 mis-parses non-ASCII .ps1
+#   files that have no BOM.)
+# ============================================================================
+
+$ErrorActionPreference = "Stop"
+$Root  = Split-Path -Parent $MyInvocation.MyCommand.Path
+$PgDir = Join-Path $Root "pgsql"
+
+# Portable binaries version. Update the version/URL here if needed.
+$Version = "16.4-1"
+$Url     = "https://get.enterprisedb.com/postgresql/postgresql-$Version-windows-x64-binaries.zip"
+$Zip     = Join-Path $env:TEMP "pg-portable-$Version.zip"
+
+Write-Host "=== Installing portable PostgreSQL $Version ===" -ForegroundColor Cyan
+
+if (Test-Path (Join-Path $PgDir "bin\pg_ctl.exe")) {
+    Write-Host "[OK] PostgreSQL already installed in $PgDir - nothing to do." -ForegroundColor Green
+    exit 0
+}
+
+Write-Host "[..] Downloading: $Url"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest -Uri $Url -OutFile $Zip
+
+Write-Host "[..] Extracting to a temp folder..."
+$Tmp = Join-Path $env:TEMP "pg-portable-extract"
+if (Test-Path $Tmp) { Remove-Item $Tmp -Recurse -Force }
+Expand-Archive -Path $Zip -DestinationPath $Tmp -Force
+
+# The archive contains a top-level pgsql\ folder - move it into the project.
+$Src = Join-Path $Tmp "pgsql"
+if (-not (Test-Path $Src)) {
+    throw "pgsql folder not found inside the archive. Check structure: $Tmp"
+}
+if (Test-Path $PgDir) { Remove-Item $PgDir -Recurse -Force }
+Move-Item -Path $Src -Destination $PgDir
+
+Remove-Item $Zip -Force
+Remove-Item $Tmp -Recurse -Force
+
+Write-Host "[OK] Done. Binaries in: $PgDir" -ForegroundColor Green
+Write-Host "[i]  Just run start.bat - PostgreSQL will come up automatically." -ForegroundColor Yellow
